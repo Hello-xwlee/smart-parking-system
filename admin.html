@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员控制台 - 智能停车管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            min-height: calc(100vh - 4rem);
+        }
+        .sidebar-item {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .sidebar-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-item.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #06b6d4;
+        }
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .user-card {
+            transition: all 0.3s ease;
+        }
+        .user-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .alert-item {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold gradient-text">智能停车管理系统 - 管理员控制台</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-600">管理员: 张管理员</div>
+                    <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                        退出登录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="pt-16 flex">
+        <!-- 侧边栏 -->
+        <div class="sidebar w-64 text-white">
+            <div class="p-6">
+                <div class="space-y-2">
+                    <div class="sidebar-item active p-3 rounded-lg" onclick="showSection('dashboard')">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">📊</span>
+                            <span>数据仪表板</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg" onclick="showSection('users')">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">👥</span>
+                            <span>用户管理</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg" onclick="showSection('parking')">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">🏢</span>
+                            <span>停车场管理</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg" onclick="showSection('bookings')">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">📅</span>
+                            <span>预约管理</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg" onclick="showSection('payments')">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">💳</span>
+                            <span>支付管理</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg" onclick="showSection('devices')">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">🔧</span>
+                            <span>设备管理</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg" onclick="showSection('alerts')">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">🚨</span>
+                            <span>异常处理</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg" onclick="showSection('pricing')">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">💰</span>
+                            <span>智能定价</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg" onclick="showSection('insights')">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">💡</span>
+                            <span>智能建议</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-item p-3 rounded-lg" onclick="showSection('settings')">
+                        <div class="flex items-center">
+                            <span class="text-xl mr-3">⚙️</span>
+                            <span>系统设置</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="flex-1 p-6">
+            <!-- 数据仪表板 -->
+            <div id="dashboard-section" class="content-section active">
+                <h2 class="text-3xl font-bold mb-8 gradient-text">数据仪表板</h2>
+                
+                <!-- 统计卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">总用户数</p>
+                                <p class="text-3xl font-bold text-blue-600" id="total-users">8,956</p>
+                            </div>
+                            <div class="text-4xl">👥</div>
+                        </div>
+                        <div class="mt-4 text-sm text-green-600">↑ 12% 较上月</div>
+                    </div>
+                    <div class="stat-card bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">活跃停车场</p>
+                                <p class="text-3xl font-bold text-green-600" id="active-parking">156</p>
+                            </div>
+                            <div class="text-4xl">🏢</div>
+                        </div>
+                        <div class="mt-4 text-sm text-green-600">↑ 5% 较上月</div>
+                    </div>
+                    <div class="stat-card bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">今日预约</p>
+                                <p class="text-3xl font-bold text-purple-600" id="today-bookings">1,234</p>
+                            </div>
+                            <div class="text-4xl">📅</div>
+                        </div>
+                        <div class="mt-4 text-sm text-red-600">↓ 3% 较昨日</div>
+                    </div>
+                    <div class="stat-card bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">今日收入</p>
+                                <p class="text-3xl font-bold text-red-600" id="today-revenue">¥45,678</p>
+                            </div>
+                            <div class="text-4xl">💰</div>
+                        </div>
+                        <div class="mt-4 text-sm text-green-600">↑ 18% 较昨日</div>
+                    </div>
+                </div>
+
+                <!-- 图表区域 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-4">用户增长趋势</h3>
+                        <div id="user-growth-chart" style="height: 300px;"></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-4">收入分析</h3>
+                        <div id="revenue-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用户管理 -->
+            <div id="users-section" class="content-section">
+                <h2 class="text-3xl font-bold mb-8 gradient-text">用户管理</h2>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center space-x-4">
+                            <input type="text" placeholder="搜索用户..." class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">搜索</button>
+                        </div>
+                        <button onclick="showAddUserModal()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            添加用户
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户名</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">手机号</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">注册时间</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table" class="bg-white divide-y divide-gray-200">
+                                <!-- 用户列表将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 停车场管理 -->
+            <div id="parking-section" class="content-section">
+                <h2 class="text-3xl font-bold mb-8 gradient-text">停车场管理</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="parking-list">
+                    <!-- 停车场卡片将通过JavaScript动态生成 -->
+                </div>
+            </div>
+
+            <!-- 预约管理 -->
+            <div id="bookings-section" class="content-section">
+                <h2 class="text-3xl font-bold mb-8 gradient-text">预约管理</h2>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">预约ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">停车场</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">预约时间</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bookings-table" class="bg-white divide-y divide-gray-200">
+                                <!-- 预约列表将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 支付管理 -->
+            <div id="payments-section" class="content-section">
+                <h2 class="text-3xl font-bold mb-8 gradient-text">支付管理</h2>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">交易ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">用户</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">停车场</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">金额</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">支付方式</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payments-table" class="bg-white divide-y divide-gray-200">
+                                <!-- 支付列表将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 设备管理 -->
+            <div id="devices-section" class="content-section">
+                <h2 class="text-3xl font-bold mb-8 gradient-text">设备管理</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="devices-list">
+                    <!-- 设备卡片将通过JavaScript动态生成 -->
+                </div>
+            </div>
+
+            <!-- 异常处理 -->
+            <div id="alerts-section" class="content-section">
+                <h2 class="text-3xl font-bold mb-8 gradient-text">异常处理</h2>
+                <div class="space-y-4" id="alerts-list">
+                    <!-- 异常列表将通过JavaScript动态生成 -->
+                </div>
+            </div>
+
+            <!-- 智能定价 -->
+            <div id="pricing-section" class="content-section">
+                <h2 class="text-3xl font-bold mb-8 gradient-text">智能动态定价</h2>
+
+                <!-- 定价配置 -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                    <h3 class="text-xl font-semibold mb-6">动态定价配置</h3>
+
+                    <!-- 基础价格配置 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">基础单价（元/小时）</label>
+                            <input type="number" id="base-price" value="5" min="1" max="50" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" onchange="savePricingConfig()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">高峰时段系数</label>
+                            <input type="number" id="peak-factor" value="1.5" min="1" max="3" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" onchange="savePricingConfig()">
+                            <p class="text-xs text-gray-500 mt-1">7:00-9:00, 17:00-19:00</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">低谷时段系数</label>
+                            <input type="number" id="off-peak-factor" value="0.8" min="0.5" max="1" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" onchange="savePricingConfig()">
+                            <p class="text-xs text-gray-500 mt-1">22:00-6:00</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">节假日系数</label>
+                            <input type="number" id="holiday-factor" value="1.2" min="1" max="2" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" onchange="savePricingConfig()">
+                            <p class="text-xs text-gray-500 mt-1">周末及法定节假日</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 rounded-lg p-4 mb-6">
+                        <h4 class="text-sm font-medium text-blue-900 mb-2">定价公式说明</h4>
+                        <p class="text-xs text-blue-800 mb-1">实时价格 = 基础单价 × 时段系数 × 节假日系数</p>
+                        <p class="text-xs text-blue-600">示例：基础价5元 × 高峰1.5 × 节假日1.2 = 9元/小时</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">选择停车场</label>
+                            <select id="parking-lot-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                <option value="P001">机电学馆停车场P001</option>
+                                <option value="P002">建筑学馆停车场P002</option>
+                                <option value="P003">大成停车场P003</option>
+                                <option value="P004">采矿学馆停车场P004</option>
+                                <option value="P005">逸夫停车场P005</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">选择时间</label>
+                            <input type="datetime-local" id="time-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">停车时长（小时）</label>
+                            <select id="duration-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                <option value="1">1小时</option>
+                                <option value="2" selected>2小时</option>
+                                <option value="3">3小时</option>
+                                <option value="6">6小时</option>
+                                <option value="12">12小时</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button onclick="updatePriceChart()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            刷新价格
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 当前价格信息 -->
+                <div id="current-price-info" class="mb-8">
+                    <!-- 动态生成内容 -->
+                </div>
+
+                <!-- 价格趋势图 -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-6">24小时价格趋势</h3>
+                    <div id="dynamic-price-chart" style="height: 400px;"></div>
+                </div>
+            </div>
+
+            <!-- 智能建议 -->
+            <div id="insights-section" class="content-section">
+                <h2 class="text-3xl font-bold mb-8 gradient-text">智能数据分析与建议</h2>
+
+                <!-- 智能建议面板 -->
+                <div id="smart-insights" class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4">💡 今日智能建议</h3>
+                    <div id="smart-insights-container">
+                        <!-- 动态生成建议卡片 -->
+                    </div>
+                </div>
+
+                <!-- 经营指标概览 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">平均利用率</p>
+                                <p class="text-3xl font-bold text-blue-600" id="avg-utilization">65.3%</p>
+                            </div>
+                            <div class="text-4xl">🚗</div>
+                        </div>
+                        <div class="mt-4 text-sm text-yellow-600">↔ 与上周持平</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">预计增收潜力</p>
+                                <p class="text-3xl font-bold text-green-600" id="revenue-potential">¥6.0K</p>
+                            </div>
+                            <div class="text-4xl">💰</div>
+                        </div>
+                        <div class="mt-4 text-sm text-green-600">↑ 13.3% 日收入</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">用户满意度</p>
+                                <p class="text-3xl font-bold text-purple-600" id="satisfaction-rate">4.6/5</p>
+                            </div>
+                            <div class="text-4xl">⭐</div>
+                        </div>
+                        <div class="mt-4 text-sm text-green-600">↑ 0.2 较上月</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">设备正常率</p>
+                                <p class="text-3xl font-bold text-red-600" id="device-uptime">92.5%</p>
+                            </div>
+                            <div class="text-4xl">🔧</div>
+                        </div>
+                        <div class="mt-4 text-sm text-red-600">↓ 2个设备故障</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统设置 -->
+            <div id="settings-section" class="content-section">
+                <h2 class="text-3xl font-bold mb-8 gradient-text">系统设置</h2>
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">基本设置</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">系统名称</label>
+                                    <input type="text" value="智能停车管理系统" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">系统版本</label>
+                                    <input type="text" value="v2.1.0" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">支付设置</h3>
+                            <div class="space-y-3">
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="mr-2">
+                                    <span>启用微信支付</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="mr-2">
+                                    <span>启用支付宝支付</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="mr-2">
+                                    <span>启用银行卡支付</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">通知设置</h3>
+                            <div class="space-y-3">
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="mr-2">
+                                    <span>启用短信通知</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="mr-2">
+                                    <span>启用邮件通知</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="mr-2">
+                                    <span>启用推送通知</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 文件上传预览功能 -->
+                        <div class="border-t pt-6">
+                            <h3 class="text-lg font-semibold mb-4 text-blue-800">文件上传预览（前端演示）</h3>
+
+                            <!-- 停车场图片上传 -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">停车场图片上传</label>
+                                <div class="flex items-center space-x-4">
+                                    <input type="file" id="parking-image-upload" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                </div>
+                                <div id="parking-image-preview" class="mt-4 hidden">
+                                    <p class="text-sm text-gray-600 mb-2">图片预览：</p>
+                                    <img id="parking-preview-img" class="max-w-xs rounded-lg shadow-md border border-gray-200">
+                                    <p class="text-xs text-gray-500 mt-2">💡 提示：当前版本仅支持本地预览（使用 URL.createObjectURL），未上传至服务器。</p>
+                                </div>
+                            </div>
+
+                            <!-- 设备图片上传 -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">设备图片上传</label>
+                                <div class="flex items-center space-x-4">
+                                    <input type="file" id="device-image-upload" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                </div>
+                                <div id="device-image-preview" class="mt-4 hidden">
+                                    <p class="text-sm text-gray-600 mb-2">图片预览：</p>
+                                    <img id="device-preview-img" class="max-w-xs rounded-lg shadow-md border border-gray-200">
+                                    <p class="text-xs text-gray-500 mt-2">💡 提示：可批量选择多张图片，当前仅演示单张预览。</p>
+                                </div>
+                            </div>
+
+                            <!-- 资源轮播图上传 -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">资源轮播图上传</label>
+                                <div class="flex items-center space-x-4">
+                                    <input type="file" id="banner-image-upload" accept="image/*" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                </div>
+                                <div id="banner-image-preview" class="mt-4 hidden">
+                                    <p class="text-sm text-gray-600 mb-2">轮播图预览：</p>
+                                    <div id="banner-preview-container" class="grid grid-cols-3 gap-4">
+                                        <!-- 多张图片预览 -->
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-2">💡 提示：支持多选上传，可用于首页轮播图展示。</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                                <h4 class="font-medium text-blue-900 mb-2">设计说明</h4>
+                                <ul class="text-sm text-blue-800 space-y-1">
+                                    <li>• 所有文件上传均使用 &lt;input type="file"&gt; 实现</li>
+                                    <li>• 通过 URL.createObjectURL() 生成临时预览地址</li>
+                                    <li>• 预览图片不持久化，刷新页面后消失</li>
+                                    <li>• 接入后端 API 后，可扩展为真实存储（阿里云OSS、七牛云等）</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                保存设置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="mockData.js"></script>
+    <script src="main.js"></script>
+    <script src="smart-functions.js"></script>
+    <script src="task5-insights.js"></script>
+    <script>
+        // 管理员控制台页面特定功能
+        let currentSection = 'dashboard';
+        let usersData = [];
+        let parkingData = [];
+        let bookingsData = [];
+        let paymentsData = [];
+        let devicesData = [];
+        let alertsData = [];
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            generateSampleData();
+            initializeDashboard();
+            displayUsers();
+            displayParkingLots();
+            displayBookings();
+            displayPayments();
+            displayDevices();
+            displayAlerts();
+
+            // 初始化时间选择器为当前时间
+            const now = new Date();
+            const timeString = now.toISOString().slice(0, 16);
+            const timeSelect = document.getElementById('time-select');
+            if (timeSelect) {
+                timeSelect.value = timeString;
+            }
+
+            // 初始化智能建议（在dashboard加载时显示）
+            if (typeof initializeSmartInsights === 'function') {
+                initializeSmartInsights();
+            }
+
+            // 初始化智能定价图表
+            updatePriceChart();
+
+            // 每10秒更新价格图表（模拟实时数据）
+            setInterval(() => {
+                if (currentSection === 'pricing') {
+                    updatePriceChart();
+                }
+            }, 10000);
+        });
+
+        // 生成示例数据
+        function generateSampleData() {
+            // 用户数据
+            usersData = [
+                { id: 1001, username: '张三', phone: '13800138001', email: 'zhang@example.com', registerTime: '2024-01-15 10:30:00', status: 'active', vehicleCount: 2 },
+                { id: 1002, username: '李四', phone: '13900139002', email: 'li@example.com', registerTime: '2024-02-20 14:20:00', status: 'active', vehicleCount: 1 },
+                { id: 1003, username: '王五', phone: '13700137003', email: 'wang@example.com', registerTime: '2024-03-10 09:15:00', status: 'inactive', vehicleCount: 3 },
+                { id: 1004, username: '赵六', phone: '13600136004', email: 'zhao@example.com', registerTime: '2024-03-25 16:45:00', status: 'active', vehicleCount: 1 },
+                { id: 1005, username: '孙七', phone: '13500135005', email: 'sun@example.com', registerTime: '2024-04-05 11:30:00', status: 'active', vehicleCount: 2 }
+            ];
+
+            // 停车场数据
+            parkingData = [
+                { id: 1, name: '机电学馆停车场', address: '沈阳市和平区东北大学南湖校区机电学馆', totalSpots: 500, availableSpots: 120, price: 8, status: 'normal', manager: '张经理', contact: '010-12345678' },
+                { id: 2, name: '建筑学馆停车场', address: '沈阳市和平区东北大学南湖校区建筑学馆', totalSpots: 800, availableSpots: 45, price: 12, status: 'busy', manager: '李经理', contact: '010-23456789' },
+                { id: 3, name: '大成停车场', address: '沈阳市和平区东北大学南湖校区大成教学楼', totalSpots: 400, availableSpots: 200, price: 10, status: 'normal', manager: '王经理', contact: '010-34567890' },
+                { id: 4, name: '逸夫停车场', address: '沈阳市和平区东北大学南湖校区逸夫教学楼', totalSpots: 600, availableSpots: 80, price: 6, status: 'busy', manager: '赵经理', contact: '010-45678901' },
+                { id: 5, name: '何世礼停车场', address: '沈阳市和平区东北大学南湖校区何世礼教学楼', totalSpots: 650, availableSpots: 150, price: 11, status: 'normal', manager: '孙经理', contact: '010-56789012' }
+            ];
+
+            // 预约数据
+            bookingsData = [
+                { id: 2001, userId: 1001, username: '张三', parkingId: 1, parkingName: '机电学馆停车场', bookingTime: '2024-11-15 09:00-10:00', status: 'confirmed', createTime: '2024-11-14 20:30:00' },
+                { id: 2002, userId: 1002, username: '李四', parkingId: 2, parkingName: '建筑学馆停车场', bookingTime: '2024-11-15 14:00-15:00', status: 'pending', createTime: '2024-11-14 18:45:00' },
+                { id: 2003, userId: 1003, username: '王五', parkingId: 3, parkingName: '大成停车场', bookingTime: '2024-11-16 10:00-11:00', status: 'cancelled', createTime: '2024-11-13 16:20:00' },
+                { id: 2004, userId: 1004, username: '赵六', parkingId: 4, parkingName: '逸夫停车场', bookingTime: '2024-11-16 15:00-16:00', status: 'confirmed', createTime: '2024-11-13 14:10:00' },
+                { id: 2005, userId: 1005, username: '孙七', parkingId: 5, parkingName: '何世礼停车场', bookingTime: '2024-11-17 11:00-12:00', status: 'completed', createTime: '2024-11-12 12:30:00' }
+            ];
+
+            // 支付数据
+            paymentsData = [
+                { id: 3001, userId: 1001, username: '张三', parkingName: '机电学馆停车场', amount: 16.00, paymentMethod: '微信支付', paymentTime: '2024-11-10 11:35:00', status: 'completed' },
+                { id: 3002, userId: 1002, username: '李四', parkingName: '建筑学馆停车场', amount: 24.00, paymentMethod: '支付宝', paymentTime: '2024-11-09 16:25:00', status: 'completed' },
+                { id: 3003, userId: 1003, username: '王五', parkingName: '大成停车场', amount: 20.00, paymentMethod: '银行卡', paymentTime: '2024-11-08 21:50:00', status: 'completed' },
+                { id: 3004, userId: 1004, username: '赵六', parkingName: '逸夫停车场', amount: 30.00, paymentMethod: '微信支付', paymentTime: '2024-11-07 12:05:00', status: 'completed' },
+                { id: 3005, userId: 1005, username: '孙七', parkingName: '何世礼停车场', amount: 18.00, paymentMethod: '支付宝', paymentTime: '2024-11-06 14:15:00', status: 'completed' }
+            ];
+
+            // 设备数据
+            devicesData = [
+                { id: 4001, name: '入口道闸-中关村', location: '机电学馆停车场', type: 'barrier', status: 'online', lastMaintenance: '2024-10-15', nextMaintenance: '2024-11-15' },
+                { id: 4002, name: '出口道闸-中关村', location: '机电学馆停车场', type: 'barrier', status: 'online', lastMaintenance: '2024-10-15', nextMaintenance: '2024-11-15' },
+                { id: 4003, name: '车牌识别摄像头-王府井', location: '建筑学馆停车场', type: 'camera', status: 'offline', lastMaintenance: '2024-09-20', nextMaintenance: '2024-11-20' },
+                { id: 4004, name: '支付终端-西单', location: '大成停车场', type: 'payment', status: 'maintenance', lastMaintenance: '2024-11-01', nextMaintenance: '2024-12-01' },
+                { id: 4005, name: '车位检测器-逸夫', location: '逸夫停车场', type: 'sensor', status: 'online', lastMaintenance: '2024-10-10', nextMaintenance: '2024-11-10' }
+            ];
+
+            // 异常数据
+            alertsData = [
+                { id: 5001, type: 'device_offline', title: '设备离线警告', description: '建筑学馆停车场车牌识别摄像头离线超过30分钟', severity: 'high', time: '2024-11-10 14:30:00', status: 'unresolved' },
+                { id: 5002, type: 'payment_error', title: '支付异常', description: '大成停车场支付终端出现故障', severity: 'medium', time: '2024-11-10 13:45:00', status: 'processing' },
+                { id: 5003, type: 'overcrowding', title: '车位拥挤警告', description: '逸夫停车场使用率超过90%', severity: 'low', time: '2024-11-10 12:20:00', status: 'resolved' },
+                { id: 5004, type: 'network_error', title: '网络连接异常', description: '何世礼停车场网络连接不稳定', severity: 'medium', time: '2024-11-10 11:15:00', status: 'resolved' },
+                { id: 5005, type: 'system_maintenance', title: '系统维护提醒', description: '系统将于今晚23:00-24:00进行例行维护', severity: 'low', time: '2024-11-09 16:00:00', status: 'resolved' }
+            ];
+        }
+
+        // 初始化仪表板
+        function initializeDashboard() {
+            // 初始化图表
+            const userGrowthChart = echarts.init(document.getElementById('user-growth-chart'));
+            const userGrowthOption = {
+                tooltip: {
+                    trigger: 'axis'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月']
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        name: '新增用户',
+                        data: [820, 932, 901, 934, 1290, 1330, 1320, 1450, 1520, 1380, 1620],
+                        type: 'line',
+                        smooth: true,
+                        itemStyle: {
+                            color: '#3b82f6'
+                        }
+                    }
+                ]
+            };
+            userGrowthChart.setOption(userGrowthOption);
+
+            const revenueChart = echarts.init(document.getElementById('revenue-chart'));
+            const revenueOption = {
+                tooltip: {
+                    trigger: 'axis'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月']
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: {
+                        formatter: '¥{value}'
+                    }
+                },
+                series: [
+                    {
+                        name: '收入',
+                        data: [32000, 28000, 45000, 38000, 52000, 48000, 60000, 55000, 42000, 38000, 45678],
+                        type: 'bar',
+                        itemStyle: {
+                            color: '#10b981'
+                        }
+                    }
+                ]
+            };
+            revenueChart.setOption(revenueOption);
+
+            // 响应式图表
+            window.addEventListener('resize', function() {
+                userGrowthChart.resize();
+                revenueChart.resize();
+            });
+        }
+
+        // 显示用户列表
+        function displayUsers() {
+            const container = document.getElementById('users-table');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            usersData.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+
+                const statusClass = user.status === 'active' ? 'text-green-600' : 'text-gray-600';
+                const statusText = user.status === 'active' ? '正常' : '禁用';
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.username}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.phone}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.registerTime}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${statusClass} font-medium">${statusText}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editUser(${user.id})" class="text-blue-600 hover:text-blue-900 mr-3">编辑</button>
+                        <button onclick="toggleUserStatus(${user.id})" class="text-red-600 hover:text-red-900">${user.status === 'active' ? '禁用' : '启用'}</button>
+                    </td>
+                `;
+
+                container.appendChild(tr);
+            });
+        }
+
+        // 显示停车场列表
+        function displayParkingLots() {
+            const container = document.getElementById('parking-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            parkingData.forEach(parking => {
+                const div = document.createElement('div');
+                div.className = 'bg-white rounded-xl shadow-lg p-6';
+
+                const statusClass = parking.status === 'normal' ? 'text-green-600' :
+                                   parking.status === 'busy' ? 'text-yellow-600' : 'text-red-600';
+                const statusText = parking.status === 'normal' ? '正常' :
+                                  parking.status === 'busy' ? '拥挤' : '已满';
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-semibold text-lg">${parking.name}</h3>
+                        <span class="${statusClass} font-medium text-sm">${statusText}</span>
+                    </div>
+                    <div class="space-y-2 text-sm text-gray-600 mb-4">
+                        <div>地址: ${parking.address}</div>
+                        <div>总车位: ${parking.totalSpots}</div>
+                        <div>空闲车位: ${parking.availableSpots}</div>
+                        <div>价格: ¥${parking.price}/小时</div>
+                        <div>负责人: ${parking.manager}</div>
+                        <div>联系电话: ${parking.contact}</div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: ${((parking.totalSpots - parking.availableSpots) / parking.totalSpots) * 100}%"></div>
+                        </div>
+                        <div class="ml-4 flex gap-2">
+                            <button onclick="editParking(${parking.id})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">编辑</button>
+                            <button onclick="viewParkingDetails(${parking.id})" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">详情</button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        // 显示预约列表
+        function displayBookings() {
+            const container = document.getElementById('bookings-table');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            bookingsData.forEach(booking => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+
+                const statusClass = booking.status === 'confirmed' ? 'text-green-600' :
+                                   booking.status === 'pending' ? 'text-yellow-600' :
+                                   booking.status === 'completed' ? 'text-blue-600' : 'text-red-600';
+                const statusText = booking.status === 'confirmed' ? '已确认' :
+                                  booking.status === 'pending' ? '待确认' :
+                                  booking.status === 'completed' ? '已完成' : '已取消';
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${booking.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${booking.username}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${booking.parkingName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${booking.bookingTime}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${statusClass} font-medium">${statusText}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="viewBooking(${booking.id})" class="text-blue-600 hover:text-blue-900 mr-3">查看</button>
+                        <button onclick="cancelBooking(${booking.id})" class="text-red-600 hover:text-red-900">取消</button>
+                    </td>
+                `;
+
+                container.appendChild(tr);
+            });
+        }
+
+        // 显示支付列表
+        function displayPayments() {
+            const container = document.getElementById('payments-table');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            paymentsData.forEach(payment => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+
+                const statusClass = payment.status === 'completed' ? 'text-green-600' : 'text-yellow-600';
+                const statusText = payment.status === 'completed' ? '已完成' : '处理中';
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${payment.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${payment.username}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${payment.parkingName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">¥${payment.amount.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${payment.paymentMethod}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${payment.paymentTime}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${statusClass} font-medium">${statusText}</td>
+                `;
+
+                container.appendChild(tr);
+            });
+        }
+
+        // 显示设备列表
+        function displayDevices() {
+            const container = document.getElementById('devices-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            devicesData.forEach(device => {
+                const div = document.createElement('div');
+                div.className = 'bg-white rounded-xl shadow-lg p-6';
+
+                const statusClass = device.status === 'online' ? 'text-green-600' :
+                                   device.status === 'offline' ? 'text-red-600' : 'text-yellow-600';
+                const statusText = device.status === 'online' ? '在线' :
+                                  device.status === 'offline' ? '离线' : '维护中';
+
+                const typeIcon = device.type === 'barrier' ? '🚧' :
+                                device.type === 'camera' ? '📷' :
+                                device.type === 'payment' ? '💳' : '📡';
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-semibold text-lg">${device.name}</h3>
+                        <span class="${statusClass} font-medium text-sm">${statusText}</span>
+                    </div>
+                    <div class="text-3xl mb-4 text-center">${typeIcon}</div>
+                    <div class="space-y-2 text-sm text-gray-600 mb-4">
+                        <div>位置: ${device.location}</div>
+                        <div>类型: ${device.type === 'barrier' ? '道闸' : device.type === 'camera' ? '摄像头' : device.type === 'payment' ? '支付终端' : '传感器'}</div>
+                        <div>上次维护: ${device.lastMaintenance}</div>
+                        <div>下次维护: ${device.nextMaintenance}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="maintenanceDevice(${device.id})" class="flex-1 bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700">维护</button>
+                        <button onclick="restartDevice(${device.id})" class="flex-1 bg-green-600 text-white py-2 rounded text-sm hover:bg-green-700">重启</button>
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        // 显示异常列表
+        function displayAlerts() {
+            const container = document.getElementById('alerts-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            alertsData.forEach(alert => {
+                const div = document.createElement('div');
+                div.className = 'alert-item bg-white rounded-xl shadow-lg p-6';
+
+                const severityClass = alert.severity === 'high' ? 'bg-red-100 text-red-800' :
+                                     alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800';
+                const statusClass = alert.status === 'unresolved' ? 'text-red-600' :
+                                   alert.status === 'processing' ? 'text-yellow-600' : 'text-green-600';
+                const statusText = alert.status === 'unresolved' ? '未解决' :
+                                  alert.status === 'processing' ? '处理中' : '已解决';
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center">
+                            <h3 class="font-semibold text-lg mr-3">${alert.title}</h3>
+                            <span class="px-2 py-1 rounded text-xs font-medium ${severityClass}">
+                                ${alert.severity === 'high' ? '高' : alert.severity === 'medium' ? '中' : '低'}
+                            </span>
+                        </div>
+                        <span class="${statusClass} font-medium text-sm">${statusText}</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">${alert.description}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">发生时间: ${alert.time}</span>
+                        <div class="flex gap-2">
+                            ${alert.status !== 'resolved' ? 
+                                `<button onclick="resolveAlert(${alert.id})" class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700">标记解决</button>` : ''}
+                            <button onclick="viewAlertDetails(${alert.id})" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">查看详情</button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        // 切换内容区域
+        function showSection(sectionName) {
+            // 隐藏所有内容区域
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // 显示选中的内容区域
+            document.getElementById(sectionName + '-section').classList.add('active');
+
+            // 更新侧边栏激活状态
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.sidebar-item').classList.add('active');
+
+            currentSection = sectionName;
+        }
+
+        // 用户管理功能
+        function editUser(userId) {
+            alert('编辑用户功能开发中，敬请期待！');
+        }
+
+        function toggleUserStatus(userId) {
+            const user = usersData.find(u => u.id === userId);
+            if (user) {
+                user.status = user.status === 'active' ? 'inactive' : 'active';
+                displayUsers();
+            }
+        }
+
+        function showAddUserModal() {
+            alert('添加用户功能开发中，敬请期待！');
+        }
+
+        // 停车场管理功能
+        function editParking(parkingId) {
+            alert('编辑停车场功能开发中，敬请期待！');
+        }
+
+        function viewParkingDetails(parkingId) {
+            alert('查看停车场详情功能开发中，敬请期待！');
+        }
+
+        // 预约管理功能
+        function viewBooking(bookingId) {
+            alert('查看预约详情功能开发中，敬请期待！');
+        }
+
+        function cancelBooking(bookingId) {
+            if (confirm('确定要取消这个预约吗？')) {
+                const booking = bookingsData.find(b => b.id === bookingId);
+                if (booking) {
+                    booking.status = 'cancelled';
+                    displayBookings();
+                }
+            }
+        }
+
+        // 设备管理功能
+        function maintenanceDevice(deviceId) {
+            const device = devicesData.find(d => d.id === deviceId);
+            if (device) {
+                device.status = 'maintenance';
+                displayDevices();
+                alert('设备已标记为维护状态');
+            }
+        }
+
+        function restartDevice(deviceId) {
+            const device = devicesData.find(d => d.id === deviceId);
+            if (device) {
+                device.status = 'online';
+                displayDevices();
+                alert('设备已重启并恢复在线状态');
+            }
+        }
+
+        // 异常处理功能
+        function resolveAlert(alertId) {
+            const alert = alertsData.find(a => a.id === alertId);
+            if (alert) {
+                alert.status = 'resolved';
+                displayAlerts();
+                alert('异常已标记为已解决');
+            }
+        }
+
+        function viewAlertDetails(alertId) {
+            alert('查看异常详情功能开发中，敬请期待！');
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // 更新价格图表和当前价格信息
+        function updatePriceChart() {
+            const parkingLotId = document.getElementById('parking-lot-select').value;
+            const timeValue = document.getElementById('time-select').value;
+            const duration = parseInt(document.getElementById('duration-select').value);
+
+            const selectedTime = timeValue ? new Date(timeValue) : new Date();
+
+            // 生成模拟停车场数据
+            const parkingLot = {
+                id: parkingLotId,
+                occupancyRate: 0.3 + Math.random() * 0.6, // 30%-90% 占用率
+                basePrice: 8 + Math.floor(Math.random() * 8) // 8-15元基础价格
+            };
+
+            // 计算当前价格
+            const priceInfo = typeof calculateDynamicPrice === 'function'
+                ? calculateDynamicPrice(parkingLot, selectedTime, duration)
+                : {
+                      hourlyRate: (parkingLot.basePrice * (0.7 + Math.random() * 1.3)).toFixed(2),
+                      totalPrice: (parkingLot.basePrice * duration * (0.7 + Math.random() * 1.3)).toFixed(2),
+                      factors: [
+                          { name: '占用率', value: (0.7 + Math.random() * 1.3).toFixed(2), description: '当前占用率影响' },
+                          { name: '时段', value: (0.7 + Math.random() * 0.8).toFixed(2), description: '时段系数' },
+                          { name: '时长折扣', value: (0.9 + Math.random() * 0.1).toFixed(2), description: '长时停车优惠' }
+                      ]
+                  };
+
+            // 更新当前价格信息
+            const priceInfoContainer = document.getElementById('current-price-info');
+            const factorColors = ['text-blue-600', 'text-green-600', 'text-purple-600', 'text-yellow-600', 'text-red-600'];
+
+            if (priceInfoContainer) {
+                const basePrice = parkingLot.basePrice;
+                const currentPrice = parseFloat(priceInfo.hourlyRate);
+                const priceChange = ((currentPrice - basePrice) / basePrice * 100).toFixed(1);
+                const trendClass = currentPrice > basePrice ? 'text-red-600' : 'text-green-600';
+                const trendIcon = currentPrice > basePrice ? '↑' : '↓';
+
+                priceInfoContainer.innerHTML = `
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-semibold">当前价格详情</h3>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium ${currentPrice > basePrice ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+                                ${trendIcon} ${Math.abs(priceChange)}%
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                <div class="text-sm text-gray-600 mb-1">基础价格</div>
+                                <div class="text-2xl font-bold text-gray-800">¥${basePrice}</div>
+                            </div>
+                            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                                <div class="text-sm text-gray-600 mb-1">动态价格</div>
+                                <div class="text-2xl font-bold text-blue-600">¥${currentPrice}</div>
+                            </div>
+                            <div class="text-center p-4 bg-green-50 rounded-lg">
+                                <div class="text-sm text-gray-600 mb-1">总价 (${duration}小时)</div>
+                                <div class="text-2xl font-bold text-green-600">¥${priceInfo.totalPrice}</div>
+                            </div>
+                            <div class="text-center p-4 bg-purple-50 rounded-lg">
+                                <div class="text-sm text-gray-600 mb-1">节省/额外</div>
+                                <div class="text-2xl font-bold ${trendClass}">
+                                    ${currentPrice > basePrice ? '-' : '+'}¥${Math.abs(currentPrice - basePrice).toFixed(2)}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-4">
+                            <h4 class="font-semibold mb-3">💡 省钱建议</h4>
+                            <div id="savings-recommendations" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- 动态生成省钱建议 -->
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 生成省钱建议
+                const savingsContainer = document.getElementById('savings-recommendations');
+                const recommendations = typeof generateSavingsRecommendations === 'function'
+                    ? generateSavingsRecommendations(parkingLot, selectedTime, duration)
+                    : [
+                          { text: '建议选择夜间停车（22:00-6:00）享受3折优惠', potential: '节省70%' },
+                          { text: '工作日下午时段价格较低，推荐错峰出行', potential: '节省30%' },
+                          { text: '停车超过3小时享受95折，超过6小时享受9折', potential: '节省10%' }
+                      ];
+
+                if (savingsContainer) {
+                    savingsContainer.innerHTML = recommendations.map((rec, index) => `
+                        <div class="flex items-start p-3 bg-green-50 rounded-lg">
+                            <span class="text-green-600 mr-2">💡</span>
+                            <div>
+                                <div class="text-sm text-gray-800">${rec.text}</div>
+                                <div class="text-xs text-green-600 font-medium mt-1">预计${rec.potential}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // 生成24小时价格趋势数据
+            const generate24HourTrend = () => {
+                const trend = [];
+                const hours = [];
+                const currentHour = selectedTime.getHours();
+
+                for (let i = 0; i < 24; i++) {
+                    const hour = new Date(selectedTime);
+                    hour.setHours(i, 0, 0, 0);
+                    hours.push(i + ':00');
+
+                    const mockLot = { ...parkingLot, occupancyRate: 0.2 + Math.random() * 0.7 };
+                    const hourPrice = typeof calculateDynamicPrice === 'function'
+                        ? calculateDynamicPrice(mockLot, hour, duration)
+                        : { hourlyRate: (basePrice * (0.6 + Math.random() * 1.4)).toFixed(2) };
+
+                    trend.push(parseFloat(hourPrice.hourlyRate));
+                }
+
+                return { hours, trend };
+            };
+
+            const { hours, trend } = generate24HourTrend();
+
+            // 绘制24小时价格趋势图
+            const chartContainer = document.getElementById('dynamic-price-chart');
+            if (chartContainer && typeof echarts !== 'undefined') {
+                const chart = echarts.init(chartContainer);
+                const maxPrice = Math.max(...trend);
+                const minPrice = Math.min(...trend);
+                const avgPrice = trend.reduce((a, b) => a + b, 0) / trend.length;
+
+                // 标记高峰和低谷时段
+                const markPointData = [];
+                const maxIndex = trend.indexOf(maxPrice);
+                const minIndex = trend.indexOf(minPrice);
+                const currentIndex = currentHour;
+
+                markPointData.push(
+                    { coord: [maxIndex, maxPrice], value: `高峰:¥${maxPrice.toFixed(1)}`, itemStyle: { color: '#ef4444' } },
+                    { coord: [minIndex, minPrice], value: `低谷:¥${minPrice.toFixed(1)}`, itemStyle: { color: '#10b981' } }
+                );
+
+                // 当前时间标记
+                if (currentIndex >= 0 && currentIndex < 24) {
+                    markPointData.push({
+                        coord: [currentIndex, trend[currentIndex]],
+                        value: `当前`,
+                        itemStyle: { color: '#3b82f6' }
+                    });
+                }
+
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        formatter: function(params) {
+                            const hour = params[0].axisValue;
+                            const price = params[0].value;
+                            const change = ((price - basePrice) / basePrice * 100).toFixed(1);
+                            return `<strong>${hour}</strong><br/>
+                                   价格: <span style="color:${price > basePrice ? '#ef4444' : '#10b981'}">¥${price.toFixed(2)}</span><br/>
+                                   变化: <span style="color:${price > basePrice ? '#ef4444' : '#10b981'}">${change > 0 ? '+' : ''}${change}%</span>`;
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: hours,
+                        axisLabel: {
+                            interval: 1
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLabel: {
+                            formatter: '¥{value}'
+                        }
+                    },
+                    series: [{
+                        name: '价格',
+                        type: 'line',
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        lineStyle: {
+                            color: '#3b82f6',
+                            width: 3
+                        },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
+                                { offset: 1, color: 'rgba(59, 130, 246, 0.05)' }
+                            ])
+                        },
+                        itemStyle: {
+                            color: '#3b82f6'
+                        },
+                        data: trend,
+                        markPoint: {
+                            data: markPointData,
+                            label: {
+                                show: true,
+                                formatter: '{b}',
+                                position: 'top'
+                            }
+                        },
+                        markLine: {
+                            silent: true,
+                            lineStyle: {
+                                color: '#f59e0b',
+                                type: 'dashed'
+                            },
+                            data: [{
+                                yAxis: basePrice,
+                                label: {
+                                    formatter: '基础价: ¥{c}'
+                                }
+                            }]
+                        }
+                    }]
+                };
+
+                chart.setOption(option);
+
+                // 在图表下方添加统计信息
+                const statsHtml = `
+                    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div class="text-center p-2 bg-red-50 rounded">
+                            <div class="text-red-600 font-medium">最高价格</div>
+                            <div class="font-bold">¥${maxPrice.toFixed(2)}</div>
+                        </div>
+                        <div class="text-center p-2 bg-green-50 rounded">
+                            <div class="text-green-600 font-medium">最低价格</div>
+                            <div class="font-bold">¥${minPrice.toFixed(2)}</div>
+                        </div>
+                        <div class="text-center p-2 bg-blue-50 rounded">
+                            <div class="text-blue-600 font-medium">平均价格</div>
+                            <div class="font-bold">¥${avgPrice.toFixed(2)}</div>
+                        </div>
+                        <div class="text-center p-2 bg-purple-50 rounded">
+                            <div class="text-purple-600 font-medium">波动幅度</div>
+                            <div class="font-bold">${((maxPrice - minPrice) / minPrice * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                `;
+
+                if (!document.getElementById('price-stats')) {
+                    const statsDiv = document.createElement('div');
+                    statsDiv.id = 'price-stats';
+                    chartContainer.parentNode.insertBefore(statsDiv, chartContainer.nextSibling);
+                }
+                document.getElementById('price-stats').innerHTML = statsHtml;
+            }
+        }
+
+        // ==================== 文件上传预览功能 ====================
+        /**
+         * 文件上传预览处理（前端演示版）
+         * 使用 URL.createObjectURL 实现本地预览，不实际上传至服务器
+         * 将来接入后端 API 后，可无缝扩展为真实文件存储
+         */
+        document.addEventListener('DOMContentLoaded', function() {
+            // 停车场图片上传
+            const parkingUpload = document.getElementById('parking-image-upload');
+            const parkingPreview = document.getElementById('parking-image-preview');
+            const parkingPreviewImg = document.getElementById('parking-preview-img');
+
+            if (parkingUpload) {
+                parkingUpload.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        const objectUrl = URL.createObjectURL(file);
+                        parkingPreviewImg.src = objectUrl;
+                        parkingPreview.classList.remove('hidden');
+
+                        // 2秒后释放 object URL（可选）
+                        setTimeout(() => {
+                            URL.revokeObjectURL(objectUrl);
+                            console.log('已释放临时 URL:', objectUrl);
+                        }, 2000);
+                    }
+                });
+            }
+
+            // 设备图片上传
+            const deviceUpload = document.getElementById('device-image-upload');
+            const devicePreview = document.getElementById('device-image-preview');
+            const devicePreviewImg = document.getElementById('device-preview-img');
+
+            if (deviceUpload) {
+                deviceUpload.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        const objectUrl = URL.createObjectURL(file);
+                        devicePreviewImg.src = objectUrl;
+                        devicePreview.classList.remove('hidden');
+
+                        console.log('设备图片预览 URL:', objectUrl);
+                    }
+                });
+            }
+
+            // 资源轮播图上传（多文件）
+            const bannerUpload = document.getElementById('banner-image-upload');
+            const bannerPreview = document.getElementById('banner-image-preview');
+            const bannerContainer = document.getElementById('banner-preview-container');
+
+            if (bannerUpload) {
+                bannerUpload.addEventListener('change', function(e) {
+                    const files = Array.from(e.target.files);
+                    bannerContainer.innerHTML = '';
+
+                    files.forEach((file, index) => {
+                        if (file.type.startsWith('image/')) {
+                            const objectUrl = URL.createObjectURL(file);
+
+                            // 创建预览卡片
+                            const previewCard = document.createElement('div');
+                            previewCard.className = 'relative group';
+                            previewCard.innerHTML = `
+                                <img src="${objectUrl}" class="w-full h-24 object-cover rounded-lg shadow-sm border border-gray-200">
+                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+                                    <span class="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">点击删除</span>
+                                </div>
+                                <button onclick="this.parentElement.remove(); URL.revokeObjectURL('${objectUrl}')" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                    ×
+                                </button>
+                            `;
+
+                            bannerContainer.appendChild(previewCard);
+                            console.log(`轮播图 ${index + 1} 预览 URL:`, objectUrl);
+                        }
+                    });
+
+                    if (files.length > 0) {
+                        bannerPreview.classList.remove('hidden');
+                    }
+                });
+            }
+
+            // 上传说明：当前仅为前端演示
+            console.log('文件上传功能已初始化（前端演示版）');
+            console.log('• 文件仅在本地预览，使用 URL.createObjectURL()');
+            console.log('• 刷新页面后预览内容会消失');
+            console.log('• 接入后端API后，可扩展为真实存储');
+        });
+
+        // 示例：如何在接入后端后上传文件
+        // 只需将以下代码替换为真实API调用：
+        // const formData = new FormData();
+        // formData.append('file', file);
+        // await fetch('/api/upload', {
+        //     method: 'POST',
+        //     body: formData
+        // });
+    </script>
+</body>
+</html>

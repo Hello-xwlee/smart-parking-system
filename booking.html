@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预约管理 - 智能停车管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .calendar-day {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .calendar-day:hover {
+            background-color: #dbeafe;
+            transform: scale(1.05);
+        }
+        .calendar-day.selected {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: white;
+        }
+        .calendar-day.disabled {
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .time-slot {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .time-slot:hover {
+            background-color: #dbeafe;
+        }
+        .time-slot.selected {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: white;
+        }
+        .time-slot.unavailable {
+            background-color: #fee2e2;
+            color: #ef4444;
+            cursor: not-allowed;
+        }
+        .booking-card {
+            transition: all 0.3s ease;
+        }
+        .booking-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold gradient-text">智能停车管理</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-600 transition-colors">首页</a>
+                    <a href="search.html" class="text-gray-600 hover:text-blue-600 transition-colors">停车场查询</a>
+                    <a href="booking.html" class="text-blue-600 font-medium hover:text-blue-800 transition-colors">预约管理</a>
+                    <a href="payment.html" class="text-gray-600 hover:text-blue-600 transition-colors">缴费中心</a>
+                    <button onclick="showAdminLogin()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        管理员登录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="pt-16">
+        <!-- 预约创建区域 -->
+        <section class="py-8">
+            <div class="container mx-auto px-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- 日历选择 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-semibold mb-4">选择日期</h2>
+                        <div class="calendar-container">
+                            <div class="flex justify-between items-center mb-4">
+                                <button onclick="previousMonth()" class="p-2 hover:bg-gray-100 rounded-lg">‹</button>
+                                <h3 id="calendar-month" class="font-semibold text-lg"></h3>
+                                <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-lg">›</button>
+                            </div>
+                            <div class="grid grid-cols-7 gap-1 mb-2">
+                                <div class="text-center text-sm font-medium text-gray-500 py-2">日</div>
+                                <div class="text-center text-sm font-medium text-gray-500 py-2">一</div>
+                                <div class="text-center text-sm font-medium text-gray-500 py-2">二</div>
+                                <div class="text-center text-sm font-medium text-gray-500 py-2">三</div>
+                                <div class="text-center text-sm font-medium text-gray-500 py-2">四</div>
+                                <div class="text-center text-sm font-medium text-gray-500 py-2">五</div>
+                                <div class="text-center text-sm font-medium text-gray-500 py-2">六</div>
+                            </div>
+                            <div id="calendar-days" class="grid grid-cols-7 gap-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- 时间选择 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-semibold mb-4">选择时间段</h2>
+                        <div class="space-y-2 max-h-80 overflow-y-auto" id="time-slots">
+                            <!-- 时间段将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+
+                    <!-- 预约确认 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-semibold mb-4">预约确认</h2>
+                        <form id="booking-form">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">停车场</label>
+                                <select id="parking-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                    <option value="">请选择停车场</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">车牌号码</label>
+                                <input type="text" id="license-plate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="请输入车牌号码">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">车辆类型</label>
+                                <select id="vehicle-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                    <option value="small">小型车</option>
+                                    <option value="medium">中型车</option>
+                                    <option value="large">大型车</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">联系电话</label>
+                                <input type="tel" id="phone-number" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="请输入联系电话">
+                            </div>
+                            <div class="mb-6">
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <h3 class="font-semibold mb-2">预约信息</h3>
+                                    <div class="text-sm text-gray-600 space-y-1">
+                                        <div>预约日期: <span id="selected-date">请选择日期</span></div>
+                                        <div>预约时间: <span id="selected-time">请选择时间</span></div>
+                                        <div>预计费用: <span id="estimated-cost">0元</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                确认预约
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 我的预约 -->
+        <section class="py-8 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl font-bold text-center mb-8 gradient-text">我的预约</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="my-bookings">
+                    <!-- 预约卡片将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-gray-300">&copy; 2024 智能停车管理系统. 基于人工智能和物联网技术的现代化停车解决方案.</p>
+        </div>
+    </footer>
+
+    <!-- 预约详情模态框 -->
+    <div id="booking-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">预约详情</h3>
+                <button onclick="closeBookingDetail()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="booking-detail-content">
+                <!-- 详情内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="mockData.js"></script>
+    <script src="main.js"></script>
+    <script>
+        // 预约管理页面特定功能
+        let currentDate = new Date();
+        let selectedDate = null;
+        let selectedTime = null;
+        let bookingData = [];
+
+        // 停车场数据
+        const parkingLots = [
+            { id: 1, name: '机电学馆停车场', price: 8 },
+            { id: 2, name: '建筑学馆停车场', price: 12 },
+            { id: 3, name: '大成停车场', price: 10 },
+            { id: 4, name: '采矿学馆停车场', price: 9 },
+            { id: 5, name: '逸夫停车场', price: 6 },
+            { id: 6, name: '何世礼停车场', price: 11 },
+            { id: 7, name: '冶金学馆停车场', price: 9 }
+        ];
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCalendar();
+            initializeTimeSlots();
+            initializeParkingSelect();
+            generateSampleBookings();
+            displayMyBookings();
+            initializeForm();
+            
+            // 检查URL参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const parkingId = urlParams.get('parkingId');
+            if (parkingId) {
+                document.getElementById('parking-select').value = parkingId;
+            }
+        });
+
+        // 初始化日历
+        function initializeCalendar() {
+            updateCalendar();
+        }
+
+        // 更新日历显示
+        function updateCalendar() {
+            const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月',
+                              '七月', '八月', '九月', '十月', '十一月', '十二月'];
+            
+            const monthElement = document.getElementById('calendar-month');
+            const daysElement = document.getElementById('calendar-days');
+            
+            if (monthElement) {
+                monthElement.textContent = `${currentDate.getFullYear()}年 ${monthNames[currentDate.getMonth()]}`;
+            }
+            
+            if (daysElement) {
+                daysElement.innerHTML = '';
+                
+                const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                const today = new Date();
+                
+                // 添加空白天数
+                for (let i = 0; i < firstDay.getDay(); i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'h-10';
+                    daysElement.appendChild(emptyDay);
+                }
+                
+                // 添加日期
+                for (let day = 1; day <= lastDay.getDate(); day++) {
+                    const dayElement = document.createElement('div');
+                    const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                    const isToday = dayDate.toDateString() === today.toDateString();
+                    const isPast = dayDate < today;
+                    const isSelected = selectedDate && dayDate.toDateString() === selectedDate.toDateString();
+                    
+                    dayElement.className = `calendar-day h-10 flex items-center justify-center text-sm rounded-lg ${
+                        isPast ? 'disabled' : 
+                        isSelected ? 'selected' : 
+                        isToday ? 'bg-blue-100 text-blue-600 font-semibold' : 'hover:bg-gray-100'
+                    }`;
+                    
+                    if (!isPast) {
+                        dayElement.onclick = () => selectDate(dayDate);
+                    }
+                    
+                    dayElement.textContent = day;
+                    daysElement.appendChild(dayElement);
+                }
+            }
+        }
+
+        // 选择日期
+        function selectDate(date) {
+            selectedDate = date;
+            updateCalendar();
+            updateSelectedDate();
+            updateEstimatedCost();
+        }
+
+        // 上一个月
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            updateCalendar();
+        }
+
+        // 下一个月
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            updateCalendar();
+        }
+
+        // 初始化时间段
+        function initializeTimeSlots() {
+            const container = document.getElementById('time-slots');
+            if (!container) return;
+
+            const timeSlots = [
+                '06:00-07:00', '07:00-08:00', '08:00-09:00', '09:00-10:00',
+                '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00',
+                '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00',
+                '18:00-19:00', '19:00-20:00', '20:00-21:00', '21:00-22:00'
+            ];
+
+            container.innerHTML = '';
+
+            timeSlots.forEach((timeSlot, index) => {
+                const div = document.createElement('div');
+                const isAvailable = Math.random() > 0.3; // 70%概率可用
+                
+                div.className = `time-slot p-3 rounded-lg border text-center ${
+                    isAvailable ? 'hover:bg-blue-50' : 'unavailable'
+                }`;
+                
+                if (isAvailable) {
+                    div.onclick = () => selectTimeSlot(timeSlot);
+                }
+                
+                div.innerHTML = `
+                    <div class="font-medium">${timeSlot}</div>
+                    <div class="text-sm text-gray-500 mt-1">
+                        ${isAvailable ? '可预约' : '已预约'}
+                    </div>
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+
+        // 选择时间段
+        function selectTimeSlot(timeSlot) {
+            selectedTime = timeSlot;
+            
+            // 更新UI
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+            
+            event.target.closest('.time-slot').classList.add('selected');
+            
+            updateSelectedTime();
+            updateEstimatedCost();
+        }
+
+        // 初始化停车场选择
+        function initializeParkingSelect() {
+            const select = document.getElementById('parking-select');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">请选择停车场</option>';
+            
+            parkingLots.forEach(parking => {
+                const option = document.createElement('option');
+                option.value = parking.id;
+                option.textContent = `${parking.name} (${parking.price}元/小时)`;
+                select.appendChild(option);
+            });
+        }
+
+        // 更新选择的日期显示
+        function updateSelectedDate() {
+            const element = document.getElementById('selected-date');
+            if (element && selectedDate) {
+                element.textContent = selectedDate.toLocaleDateString('zh-CN');
+            }
+        }
+
+        // 更新选择的时间显示
+        function updateSelectedTime() {
+            const element = document.getElementById('selected-time');
+            if (element && selectedTime) {
+                element.textContent = selectedTime;
+            }
+        }
+
+        // 更新预计费用
+        function updateEstimatedCost() {
+            const element = document.getElementById('estimated-cost');
+            const parkingSelect = document.getElementById('parking-select');
+            
+            if (element && parkingSelect && selectedTime) {
+                const parkingId = parseInt(parkingSelect.value);
+                const parking = parkingLots.find(p => p.id === parkingId);
+                
+                if (parking) {
+                    // 假设每个时间段为1小时
+                    const cost = parking.price;
+                    element.textContent = `${cost}元`;
+                } else {
+                    element.textContent = '0元';
+                }
+            }
+        }
+
+        // 初始化表单
+        function initializeForm() {
+            const form = document.getElementById('booking-form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    handleBookingSubmit();
+                });
+            }
+
+            // 停车场选择变化时更新费用
+            const parkingSelect = document.getElementById('parking-select');
+            if (parkingSelect) {
+                parkingSelect.addEventListener('change', updateEstimatedCost);
+            }
+        }
+
+        // 处理预约提交
+        function handleBookingSubmit() {
+            const parkingId = parseInt(document.getElementById('parking-select').value);
+            const licensePlate = document.getElementById('license-plate').value;
+            const vehicleType = document.getElementById('vehicle-type').value;
+            const phoneNumber = document.getElementById('phone-number').value;
+
+            // 验证表单
+            if (!parkingId || !licensePlate || !phoneNumber || !selectedDate || !selectedTime) {
+                alert('请填写完整的预约信息');
+                return;
+            }
+
+            // 验证车牌号码格式
+            const licensePlateRegex = /^[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领][A-Z][A-Z0-9]{5,6}$/;
+            if (!licensePlateRegex.test(licensePlate)) {
+                alert('请输入正确的车牌号码格式');
+                return;
+            }
+
+            // 验证手机号格式
+            const phoneRegex = /^1[3-9]\d{9}$/;
+            if (!phoneRegex.test(phoneNumber)) {
+                alert('请输入正确的手机号码');
+                return;
+            }
+
+            // 创建预约记录
+            const parking = parkingLots.find(p => p.id === parkingId);
+            const booking = {
+                id: Date.now(),
+                parkingId: parkingId,
+                parkingName: parking.name,
+                licensePlate: licensePlate,
+                vehicleType: vehicleType,
+                phoneNumber: phoneNumber,
+                date: selectedDate.toLocaleDateString('zh-CN'),
+                time: selectedTime,
+                cost: parking.price,
+                status: 'confirmed',
+                createdAt: new Date().toLocaleString('zh-CN')
+            };
+
+            // 添加到预约列表
+            bookingData.unshift(booking);
+            
+            // 显示成功消息
+            alert('预约成功！');
+            
+            // 重置表单
+            resetForm();
+            
+            // 更新预约列表显示
+            displayMyBookings();
+        }
+
+        // 重置表单
+        function resetForm() {
+            document.getElementById('booking-form').reset();
+            selectedDate = null;
+            selectedTime = null;
+            document.getElementById('selected-date').textContent = '请选择日期';
+            document.getElementById('selected-time').textContent = '请选择时间';
+            document.getElementById('estimated-cost').textContent = '0元';
+            
+            // 重置日历和时间选择
+            updateCalendar();
+            initializeTimeSlots();
+        }
+
+        // 生成示例预约数据
+        function generateSampleBookings() {
+            const sampleBookings = [
+                {
+                    id: 1001,
+                    parkingId: 1,
+                    parkingName: '机电学馆停车场',
+                    licensePlate: '京A12345',
+                    vehicleType: 'small',
+                    phoneNumber: '13800138001',
+                    date: '2024-11-15',
+                    time: '09:00-10:00',
+                    cost: 8,
+                    status: 'confirmed',
+                    createdAt: '2024-11-10 14:30:00'
+                },
+                {
+                    id: 1002,
+                    parkingId: 2,
+                    parkingName: '建筑学馆停车场',
+                    licensePlate: '京B67890',
+                    vehicleType: 'medium',
+                    phoneNumber: '13900139002',
+                    date: '2024-11-16',
+                    time: '14:00-15:00',
+                    cost: 12,
+                    status: 'pending',
+                    createdAt: '2024-11-09 10:15:00'
+                },
+                {
+                    id: 1003,
+                    parkingId: 3,
+                    parkingName: '大成停车场',
+                    licensePlate: '京C24680',
+                    vehicleType: 'large',
+                    phoneNumber: '13700137003',
+                    date: '2024-11-14',
+                    time: '19:00-20:00',
+                    cost: 10,
+                    status: 'completed',
+                    createdAt: '2024-11-08 16:45:00'
+                }
+            ];
+
+            bookingData = sampleBookings;
+        }
+
+        // 显示我的预约
+        function displayMyBookings() {
+            const container = document.getElementById('my-bookings');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            bookingData.forEach(booking => {
+                const div = document.createElement('div');
+                div.className = 'booking-card bg-white rounded-xl shadow-lg p-6 cursor-pointer';
+                div.onclick = () => showBookingDetail(booking);
+
+                const statusClass = booking.status === 'confirmed' ? 'text-green-600' :
+                                   booking.status === 'pending' ? 'text-yellow-600' :
+                                   booking.status === 'completed' ? 'text-gray-600' : 'text-red-600';
+                
+                const statusText = booking.status === 'confirmed' ? '已确认' :
+                                  booking.status === 'pending' ? '待确认' :
+                                  booking.status === 'completed' ? '已完成' : '已取消';
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-semibold text-lg">${booking.parkingName}</h3>
+                        <span class="${statusClass} font-medium text-sm">${statusText}</span>
+                    </div>
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <div>车牌号: ${booking.licensePlate}</div>
+                        <div>预约日期: ${booking.date}</div>
+                        <div>预约时间: ${booking.time}</div>
+                        <div>预约费用: ${booking.cost}元</div>
+                    </div>
+                    <div class="mt-4 flex justify-between items-center">
+                        <span class="text-xs text-gray-500">预约时间: ${booking.createdAt}</span>
+                        <div class="flex gap-2">
+                            ${booking.status === 'confirmed' ? 
+                                `<button onclick="event.stopPropagation(); cancelBooking(${booking.id})" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">取消</button>` : ''}
+                            ${booking.status === 'completed' ? 
+                                `<button onclick="event.stopPropagation(); rebook(${booking.id})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">再次预约</button>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        // 显示预约详情
+        function showBookingDetail(booking) {
+            const modal = document.getElementById('booking-detail-modal');
+            const content = document.getElementById('booking-detail-content');
+            
+            if (modal && content) {
+                const statusClass = booking.status === 'confirmed' ? 'text-green-600' :
+                                   booking.status === 'pending' ? 'text-yellow-600' :
+                                   booking.status === 'completed' ? 'text-gray-600' : 'text-red-600';
+                
+                const statusText = booking.status === 'confirmed' ? '已确认' :
+                                  booking.status === 'pending' ? '待确认' :
+                                  booking.status === 'completed' ? '已完成' : '已取消';
+
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold mb-2">预约信息</h4>
+                            <div class="text-sm text-gray-600 space-y-1">
+                                <div>停车场: ${booking.parkingName}</div>
+                                <div>车牌号码: ${booking.licensePlate}</div>
+                                <div>车辆类型: ${booking.vehicleType === 'small' ? '小型车' : booking.vehicleType === 'medium' ? '中型车' : '大型车'}</div>
+                                <div>联系电话: ${booking.phoneNumber}</div>
+                                <div>预约日期: ${booking.date}</div>
+                                <div>预约时间: ${booking.time}</div>
+                                <div>预约费用: ${booking.cost}元</div>
+                                <div>预约状态: <span class="${statusClass}">${statusText}</span></div>
+                                <div>创建时间: ${booking.createdAt}</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            ${booking.status === 'confirmed' ? 
+                                `<button onclick="cancelBooking(${booking.id})" class="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700">取消预约</button>` : ''}
+                            ${booking.status === 'completed' ? 
+                                `<button onclick="rebook(${booking.id})" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">再次预约</button>` : ''}
+                            <button onclick="closeBookingDetail()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400">关闭</button>
+                        </div>
+                    </div>
+                `;
+                
+                modal.classList.remove('hidden');
+            }
+        }
+
+        // 关闭预约详情
+        function closeBookingDetail() {
+            const modal = document.getElementById('booking-detail-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // 取消预约
+        function cancelBooking(bookingId) {
+            if (confirm('确定要取消这个预约吗？')) {
+                const booking = bookingData.find(b => b.id === bookingId);
+                if (booking) {
+                    booking.status = 'cancelled';
+                    displayMyBookings();
+                    closeBookingDetail();
+                    alert('预约已取消');
+                }
+            }
+        }
+
+        // 再次预约
+        function rebook(bookingId) {
+            const booking = bookingData.find(b => b.id === bookingId);
+            if (booking) {
+                // 填充表单
+                document.getElementById('parking-select').value = booking.parkingId;
+                document.getElementById('license-plate').value = booking.licensePlate;
+                document.getElementById('vehicle-type').value = booking.vehicleType;
+                document.getElementById('phone-number').value = booking.phoneNumber;
+                
+                closeBookingDetail();
+                
+                // 滚动到预约区域
+                document.querySelector('.booking-card').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    </script>
+</body>
+</html>

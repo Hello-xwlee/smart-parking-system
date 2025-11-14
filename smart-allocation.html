@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能车位推荐 - 智能停车管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .rank-1 {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+        .rank-2 {
+            background: linear-gradient(135deg, #c0c0c0, #e5e5e5);
+        }
+        .rank-3 {
+            background: linear-gradient(135deg, #cd7f32, #daa520);
+        }
+        .progress-bar {
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            background: #e5e7eb;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease-in-out;
+        }
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-cyan-50 min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold gradient-text">智能停车管理</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-600 transition-colors">首页</a>
+                    <a href="search.html" class="text-gray-600 hover:text-blue-600 transition-colors">停车场查询</a>
+                    <a href="booking.html" class="text-gray-600 hover:text-blue-600 transition-colors">预约管理</a>
+                    <a href="payment.html" class="text-gray-600 hover:text-blue-600 transition-colors">缴费中心</a>
+                    <button onclick="showAdminLogin()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        管理员登录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主体内容 -->
+    <div class="pt-20 pb-12">
+        <!-- 页面标题 -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold gradient-text mb-4">🎯 智能车位推荐</h1>
+                <p class="text-gray-600 text-lg">基于多维度智能算法，为您推荐最优停车位</p>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- 左侧：输入表单 -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6 sticky top-24">
+                        <h2 class="text-2xl font-semibold mb-6 text-gray-800">📋 车辆信息</h2>
+
+                        <!-- 车型选择 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">车型</label>
+                            <select id="vehicleType" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="sedan">轿车（4.5m × 1.8m）</option>
+                                <option value="suv">SUV（5.0m × 2.0m）</option>
+                                <option value="mpv">MPV（5.2m × 2.2m）</option>
+                                <option value="compact">小型车（4.0m × 1.7m）</option>
+                            </select>
+                        </div>
+
+                        <!-- 自定义尺寸（可选） -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">自定义尺寸（米）</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="number" id="customLength" placeholder="长度" step="0.1" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                                <input type="number" id="customWidth" placeholder="宽度" step="0.1" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">留空则使用默认车型尺寸</p>
+                        </div>
+
+                        <!-- 用户偏好 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">偏好设置</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="radio" name="preference" value="distance" class="mr-2" checked>
+                                    <span>距离优先（推荐）</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="preference" value="price" class="mr-2">
+                                    <span>价格优先</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="preference" value="balanced" class="mr-2">
+                                    <span>均衡考虑</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 推荐按钮 -->
+                        <button id="recommendBtn" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            🚀 开始智能推荐
+                        </button>
+
+                        <!-- 清空按钮 -->
+                        <button id="clearBtn" class="w-full mt-3 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors font-medium">
+                            清空表单
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 右侧：推荐结果 -->
+                <div class="lg:col-span-2">
+                    <div id="resultsContainer" class="space-y-6">
+                        <!-- 初始状态 -->
+                        <div id="initialState" class="text-center py-16">
+                            <div class="text-6xl mb-4">🚗</div>
+                            <h3 class="text-2xl font-medium text-gray-700 mb-2">欢迎使用智能推荐</h3>
+                            <p class="text-gray-600">请在左侧填写车辆信息和偏好设置<br>点击"开始智能推荐"获取最适合您的车位</p>
+                        </div>
+
+                        <!-- 加载状态 -->
+                        <div id="loadingState" class="text-center py-16" style="display: none;">
+                            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                            <h3 class="text-xl font-medium text-gray-700 mb-2">正在为您智能推荐车位...</h3>
+                            <p class="text-gray-600">算法正在分析所有可用车位</p>
+                        </div>
+
+                        <!-- 推荐结果（动态生成） -->
+                        <!-- 内容将由JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 评分详情弹窗 -->
+    <div id="scoreModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-semibold">📊 评分详情</h3>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-sm">&copy; 2025 智能停车管理系统. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <script src="mockData.js"></script>
+    <script src="main.js"></script>
+    <script src="smart-functions.js"></script>
+</body>
+</html>

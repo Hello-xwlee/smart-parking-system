@@ -1,0 +1,72 @@
+<!-- 智能定价模块 - 用于插入到 admin.html -->
+<!-- 智能定价 -->
+<div id="pricing-section" class="content-section">
+    <h2 class="text-3xl font-bold mb-8 gradient-text">智能动态定价</h2>
+
+    <!-- 定价配置 -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h3 class="text-xl font-semibold mb-6">定价配置</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">选择停车场</label>
+                <select id="parking-lot-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    <option value="P001">机电学馆停车场P001</option>
+                    <option value="P002">建筑学馆停车场P002</option>
+                    <option value="P003">大成停车场P003</option>
+                    <option value="P004">采矿学馆停车场P004</option>
+                    <option value="P005">逸夫停车场P005</option>
+                    <option value="P006">何世礼停车场P006</option>
+                    <option value="P007">冶金学馆停车场P007</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">选择时间</label>
+                <input type="datetime-local" id="time-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">停车时长（小时）</label>
+                <select id="duration-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    <option value="1">1小时</option>
+                    <option value="2" selected>2小时</option>
+                    <option value="3">3小时</option>
+                    <option value="6">6小时</option>
+                    <option value="12">12小时</option>
+                </select>
+            </div>
+        </div>
+        <div class="mt-6">
+            <button onclick="updatePriceChart()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                刷新价格
+            </button>
+        </div>
+    </div>
+
+    <!-- 当前价格信息 -->
+    <div id="current-price-info">
+        <!-- 动态生成内容 -->
+    </div>
+
+    <!-- 价格趋势图 -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-semibold mb-6">24小时价格趋势</h3>
+        <div id="dynamic-price-chart" style="height: 400px;"></div>
+    </div>
+</div>
+
+<style>
+    #dynamic-price-chart {
+        width: 100%;
+    }
+</style>
+
+<script>
+    // 初始化时间选择器为当前时间
+    document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        const timeString = now.toISOString().slice(0, 16);
+        const timeSelect = document.getElementById('time-select');
+        if (timeSelect) {
+            timeSelect.value = timeString;
+        }
+    });
+</script>

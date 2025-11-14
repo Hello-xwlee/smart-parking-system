@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>缴费中心 - 智能停车管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .payment-card {
+            transition: all 0.3s ease;
+        }
+        .payment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .payment-method {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .payment-method:hover {
+            background-color: #f3f4f6;
+        }
+        .payment-method.selected {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: white;
+        }
+        .invoice-card {
+            transition: all 0.3s ease;
+        }
+        .invoice-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .status-unpaid { color: #ef4444; }
+        .status-paid { color: #10b981; }
+        .status-pending { color: #f59e0b; }
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSJ3aGl0ZSIvPgo8cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiBmaWxsPSJibGFjayIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxNiI+5Zu+54mH5Y+R5biDPC90ZXh0Pgo8L3N2Zz4K') center/contain no-repeat;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold gradient-text">智能停车管理</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-600 transition-colors">首页</a>
+                    <a href="search.html" class="text-gray-600 hover:text-blue-600 transition-colors">停车场查询</a>
+                    <a href="booking.html" class="text-gray-600 hover:text-blue-600 transition-colors">预约管理</a>
+                    <a href="payment.html" class="text-blue-600 font-medium hover:text-blue-800 transition-colors">缴费中心</a>
+                    <button onclick="showAdminLogin()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        管理员登录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="pt-16">
+        <!-- 费用概览 -->
+        <section class="py-8">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl font-bold text-center mb-8 gradient-text">费用概览</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                        <div class="text-3xl mb-2">💰</div>
+                        <h3 class="text-lg font-semibold mb-2">待缴费</h3>
+                        <p class="text-2xl font-bold text-red-600" id="pending-amount">¥156.00</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                        <div class="text-3xl mb-2">✅</div>
+                        <h3 class="text-lg font-semibold mb-2">已缴费</h3>
+                        <p class="text-2xl font-bold text-green-600" id="paid-amount">¥2,340.00</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                        <div class="text-3xl mb-2">📊</div>
+                        <h3 class="text-lg font-semibold mb-2">本月消费</h3>
+                        <p class="text-2xl font-bold text-blue-600" id="monthly-amount">¥568.00</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                        <div class="text-3xl mb-2">🎯</div>
+                        <h3 class="text-lg font-semibold mb-2">优惠节省</h3>
+                        <p class="text-2xl font-bold text-purple-600" id="savings-amount">¥89.00</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 待缴费项目 -->
+        <section class="py-8 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-bold gradient-text">待缴费项目</h2>
+                    <button onclick="batchPayment()" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors">
+                        一键缴费
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="pending-payments">
+                    <!-- 待缴费项目将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 支付界面 -->
+        <section class="py-8" id="payment-section" style="display: none;">
+            <div class="container mx-auto px-6">
+                <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold mb-6 text-center">支付费用</h2>
+                    <div class="mb-6">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold mb-2">支付详情</h3>
+                            <div class="text-sm text-gray-600 space-y-1" id="payment-details">
+                                <!-- 支付详情将通过JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 支付方式选择 -->
+                    <div class="mb-6">
+                        <h3 class="font-semibold mb-4">选择支付方式</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="payment-method p-4 border rounded-lg text-center" onclick="selectPaymentMethod('wechat')">
+                                <div class="text-2xl mb-2">💚</div>
+                                <div class="font-medium">微信支付</div>
+                            </div>
+                            <div class="payment-method p-4 border rounded-lg text-center" onclick="selectPaymentMethod('alipay')">
+                                <div class="text-2xl mb-2">💙</div>
+                                <div class="font-medium">支付宝</div>
+                            </div>
+                            <div class="payment-method p-4 border rounded-lg text-center" onclick="selectPaymentMethod('card')">
+                                <div class="text-2xl mb-2">💳</div>
+                                <div class="font-medium">银行卡</div>
+                            </div>
+                            <div class="payment-method p-4 border rounded-lg text-center" onclick="selectPaymentMethod('balance')">
+                                <div class="text-2xl mb-2">💰</div>
+                                <div class="font-medium">余额支付</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 二维码支付区域 -->
+                    <div id="qr-payment" class="text-center mb-6" style="display: none;">
+                        <h3 class="font-semibold mb-4">请扫描二维码支付</h3>
+                        <div class="qr-code mx-auto mb-4"></div>
+                        <p class="text-sm text-gray-600">请使用微信或支付宝扫描二维码完成支付</p>
+                    </div>
+
+                    <!-- 支付按钮 -->
+                    <div class="flex gap-4">
+                        <button onclick="cancelPayment()" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition-colors">
+                            取消支付
+                        </button>
+                        <button onclick="confirmPayment()" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                            确认支付
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 缴费记录 -->
+        <section class="py-8">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl font-bold text-center mb-8 gradient-text">缴费记录</h2>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">停车场</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">车牌号</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">停车时间</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">费用</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payment-history" class="bg-white divide-y divide-gray-200">
+                                <!-- 缴费记录将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 电子发票 -->
+        <section class="py-8 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl font-bold text-center mb-8 gradient-text">电子发票管理</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="invoice-list">
+                    <!-- 发票列表将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 消费统计 -->
+        <section class="py-8">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl font-bold text-center mb-8 gradient-text">消费统计分析</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-4">月度消费趋势</h3>
+                        <div id="monthly-chart" style="height: 300px;"></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-4">停车场消费分布</h3>
+                        <div id="parking-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-gray-300">&copy; 2024 智能停车管理系统. 基于人工智能和物联网技术的现代化停车解决方案.</p>
+        </div>
+    </footer>
+
+    <!-- 发票详情模态框 -->
+    <div id="invoice-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">电子发票</h3>
+                <button onclick="closeInvoiceModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="invoice-content">
+                <!-- 发票内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="mockData.js"></script>
+    <script src="main.js"></script>
+    <script>
+        // 缴费中心页面特定功能
+        let pendingPayments = [];
+        let paymentHistory = [];
+        let invoices = [];
+        let selectedPaymentMethod = null;
+        let currentPayment = null;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            generateSampleData();
+            displayPendingPayments();
+            displayPaymentHistory();
+            displayInvoices();
+            initializeCharts();
+            updateStatistics();
+        });
+
+        // 生成示例数据
+        function generateSampleData() {
+            // 待缴费项目
+            pendingPayments = [
+                {
+                    id: 1,
+                    parkingName: '机电学馆停车场',
+                    licensePlate: '京A12345',
+                    entryTime: '2024-11-10 09:00:00',
+                    exitTime: '2024-11-10 11:30:00',
+                    duration: '2小时30分钟',
+                    amount: 20.00,
+                    status: 'unpaid',
+                    parkingId: 1
+                },
+                {
+                    id: 2,
+                    parkingName: '建筑学馆停车场',
+                    licensePlate: '京B67890',
+                    entryTime: '2024-11-09 14:00:00',
+                    exitTime: '2024-11-09 16:15:00',
+                    duration: '2小时15分钟',
+                    amount: 27.00,
+                    status: 'unpaid',
+                    parkingId: 2
+                },
+                {
+                    id: 3,
+                    parkingName: '大成停车场',
+                    licensePlate: '京C24680',
+                    entryTime: '2024-11-08 19:00:00',
+                    exitTime: '2024-11-08 21:45:00',
+                    duration: '2小时45分钟',
+                    amount: 27.50,
+                    status: 'unpaid',
+                    parkingId: 3
+                }
+            ];
+
+            // 缴费记录
+            paymentHistory = [
+                {
+                    id: 101,
+                    parkingName: '逸夫停车场',
+                    licensePlate: '京D13579',
+                    parkingTime: '2024-11-07 10:00-12:00',
+                    amount: 40.00,
+                    status: 'paid',
+                    paymentTime: '2024-11-07 12:05:00',
+                    paymentMethod: '微信支付'
+                },
+                {
+                    id: 102,
+                    parkingName: '何世礼停车场',
+                    licensePlate: '京E86420',
+                    parkingTime: '2024-11-06 15:30-17:30',
+                    amount: 25.00,
+                    status: 'paid',
+                    paymentTime: '2024-11-06 17:35:00',
+                    paymentMethod: '支付宝'
+                },
+                {
+                    id: 103,
+                    parkingName: '冶金学馆停车场',
+                    licensePlate: '京F11223',
+                    parkingTime: '2024-11-05 08:00-18:00',
+                    amount: 80.00,
+                    status: 'paid',
+                    paymentTime: '2024-11-05 18:10:00',
+                    paymentMethod: '银行卡'
+                }
+            ];
+
+            // 电子发票
+            invoices = [
+                {
+                    id: 1001,
+                    invoiceNumber: 'FP20241107001',
+                    parkingName: '逸夫停车场',
+                    amount: 40.00,
+                    issueDate: '2024-11-07',
+                    status: 'issued',
+                    taxAmount: 2.26,
+                    licensePlate: '京D13579'
+                },
+                {
+                    id: 1002,
+                    invoiceNumber: 'FP20241106002',
+                    parkingName: '何世礼停车场',
+                    amount: 25.00,
+                    issueDate: '2024-11-06',
+                    status: 'issued',
+                    taxAmount: 1.42,
+                    licensePlate: '京E86420'
+                },
+                {
+                    id: 1003,
+                    invoiceNumber: 'FP20241105003',
+                    parkingName: '冶金学馆停车场',
+                    amount: 80.00,
+                    issueDate: '2024-11-05',
+                    status: 'issued',
+                    taxAmount: 4.52,
+                    licensePlate: '京F11223'
+                }
+            ];
+        }
+
+        // 显示待缴费项目
+        function displayPendingPayments() {
+            const container = document.getElementById('pending-payments');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            pendingPayments.forEach(payment => {
+                const div = document.createElement('div');
+                div.className = 'payment-card bg-white rounded-xl shadow-lg p-6';
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-semibold text-lg">${payment.parkingName}</h3>
+                        <span class="status-unpaid font-medium">待缴费</span>
+                    </div>
+                    <div class="space-y-2 text-sm text-gray-600 mb-4">
+                        <div>车牌号: ${payment.licensePlate}</div>
+                        <div>入场时间: ${payment.entryTime}</div>
+                        <div>出场时间: ${payment.exitTime}</div>
+                        <div>停车时长: ${payment.duration}</div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-bold text-red-600">¥${payment.amount.toFixed(2)}</span>
+                        <button onclick="showPaymentSection(${payment.id})" 
+                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            立即支付
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        // 显示缴费记录
+        function displayPaymentHistory() {
+            const container = document.getElementById('payment-history');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            paymentHistory.forEach(record => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+
+                const statusClass = record.status === 'paid' ? 'status-paid' : 'status-pending';
+                const statusText = record.status === 'paid' ? '已支付' : '待支付';
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${record.parkingName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${record.licensePlate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${record.parkingTime}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">¥${record.amount.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${statusClass} font-medium">${statusText}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="showInvoice(${record.id})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            查看发票
+                        </button>
+                        <button onclick="downloadInvoice(${record.id})" class="text-green-600 hover:text-green-900">
+                            下载
+                        </button>
+                    </td>
+                `;
+
+                container.appendChild(tr);
+            });
+        }
+
+        // 显示电子发票
+        function displayInvoices() {
+            const container = document.getElementById('invoice-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            invoices.forEach(invoice => {
+                const div = document.createElement('div');
+                div.className = 'invoice-card bg-white rounded-xl shadow-lg p-6 cursor-pointer';
+                div.onclick = () => showInvoiceDetail(invoice);
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-semibold text-lg">${invoice.parkingName}</h3>
+                        <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">已开具</span>
+                    </div>
+                    <div class="space-y-2 text-sm text-gray-600 mb-4">
+                        <div>发票号码: ${invoice.invoiceNumber}</div>
+                        <div>车牌号: ${invoice.licensePlate}</div>
+                        <div>开票日期: ${invoice.issueDate}</div>
+                        <div>税额: ¥${invoice.taxAmount.toFixed(2)}</div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xl font-bold text-blue-600">¥${invoice.amount.toFixed(2)}</span>
+                        <div class="flex gap-2">
+                            <button onclick="event.stopPropagation(); downloadInvoice(${invoice.id})" 
+                                    class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                下载
+                            </button>
+                            <button onclick="event.stopPropagation(); sendInvoice(${invoice.id})" 
+                                    class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                                发送
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        // 显示支付区域
+        function showPaymentSection(paymentId) {
+            currentPayment = pendingPayments.find(p => p.id === paymentId);
+            if (!currentPayment) return;
+
+            const paymentSection = document.getElementById('payment-section');
+            const paymentDetails = document.getElementById('payment-details');
+            
+            if (paymentSection && paymentDetails) {
+                paymentDetails.innerHTML = `
+                    <div>停车场: ${currentPayment.parkingName}</div>
+                    <div>车牌号: ${currentPayment.licensePlate}</div>
+                    <div>停车时长: ${currentPayment.duration}</div>
+                    <div>应付金额: <span class="font-bold text-red-600">¥${currentPayment.amount.toFixed(2)}</span></div>
+                `;
+                
+                paymentSection.style.display = 'block';
+                paymentSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // 选择支付方式
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            
+            // 更新UI
+            document.querySelectorAll('.payment-method').forEach(el => {
+                el.classList.remove('selected');
+            });
+            event.target.closest('.payment-method').classList.add('selected');
+            
+            // 显示二维码（仅微信和支付宝）
+            const qrPayment = document.getElementById('qr-payment');
+            if (method === 'wechat' || method === 'alipay') {
+                qrPayment.style.display = 'block';
+            } else {
+                qrPayment.style.display = 'none';
+            }
+        }
+
+        // 确认支付
+        function confirmPayment() {
+            if (!selectedPaymentMethod) {
+                alert('请选择支付方式');
+                return;
+            }
+
+            if (!currentPayment) {
+                alert('支付信息错误');
+                return;
+            }
+
+            // 模拟支付过程
+            const paymentMethods = {
+                'wechat': '微信支付',
+                'alipay': '支付宝',
+                'card': '银行卡',
+                'balance': '余额支付'
+            };
+
+            // 添加到缴费记录
+            const newRecord = {
+                id: Date.now(),
+                parkingName: currentPayment.parkingName,
+                licensePlate: currentPayment.licensePlate,
+                parkingTime: `${currentPayment.entryTime.split(' ')[1]}-${currentPayment.exitTime.split(' ')[1]}`,
+                amount: currentPayment.amount,
+                status: 'paid',
+                paymentTime: new Date().toLocaleString('zh-CN'),
+                paymentMethod: paymentMethods[selectedPaymentMethod]
+            };
+
+            paymentHistory.unshift(newRecord);
+
+            // 从待缴费列表中移除
+            pendingPayments = pendingPayments.filter(p => p.id !== currentPayment.id);
+
+            // 生成发票
+            const newInvoice = {
+                id: Date.now(),
+                invoiceNumber: `FP${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${String(invoices.length + 1).padStart(3, '0')}`,
+                parkingName: currentPayment.parkingName,
+                amount: currentPayment.amount,
+                issueDate: new Date().toISOString().slice(0, 10),
+                status: 'issued',
+                taxAmount: currentPayment.amount * 0.06,
+                licensePlate: currentPayment.licensePlate
+            };
+
+            invoices.unshift(newInvoice);
+
+            // 显示支付成功
+            alert('支付成功！');
+            
+            // 隐藏支付区域
+            document.getElementById('payment-section').style.display = 'none';
+            
+            // 重置支付状态
+            currentPayment = null;
+            selectedPaymentMethod = null;
+            
+            // 更新显示
+            displayPendingPayments();
+            displayPaymentHistory();
+            displayInvoices();
+            updateStatistics();
+        }
+
+        // 取消支付
+        function cancelPayment() {
+            document.getElementById('payment-section').style.display = 'none';
+            currentPayment = null;
+            selectedPaymentMethod = null;
+        }
+
+        // 一键缴费
+        function batchPayment() {
+            if (pendingPayments.length === 0) {
+                alert('暂无待缴费项目');
+                return;
+            }
+
+            if (confirm(`确定要支付所有待缴费项目吗？总金额为¥${pendingPayments.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}`)) {
+                // 模拟批量支付
+                pendingPayments.forEach(payment => {
+                    const newRecord = {
+                        id: Date.now() + payment.id,
+                        parkingName: payment.parkingName,
+                        licensePlate: payment.licensePlate,
+                        parkingTime: `${payment.entryTime.split(' ')[1]}-${payment.exitTime.split(' ')[1]}`,
+                        amount: payment.amount,
+                        status: 'paid',
+                        paymentTime: new Date().toLocaleString('zh-CN'),
+                        paymentMethod: '微信支付'
+                    };
+                    paymentHistory.unshift(newRecord);
+                });
+
+                pendingPayments = [];
+                
+                alert('批量支付成功！');
+                
+                displayPendingPayments();
+                displayPaymentHistory();
+                updateStatistics();
+            }
+        }
+
+        // 显示发票详情
+        function showInvoiceDetail(invoice) {
+            const modal = document.getElementById('invoice-modal');
+            const content = document.getElementById('invoice-content');
+            
+            if (modal && content) {
+                content.innerHTML = `
+                    <div class="text-center mb-6">
+                        <h4 class="text-xl font-bold mb-2">沈阳市停车服务发票</h4>
+                        <p class="text-sm text-gray-600">发票代码: 011001900111</p>
+                        <p class="text-sm text-gray-600">发票号码: ${invoice.invoiceNumber}</p>
+                    </div>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between">
+                            <span class="font-medium">购买方:</span>
+                            <span>${invoice.licensePlate}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium">服务名称:</span>
+                            <span>停车服务</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium">停车场:</span>
+                            <span>${invoice.parkingName}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium">开票日期:</span>
+                            <span>${invoice.issueDate}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium">金额:</span>
+                            <span class="font-bold">¥${invoice.amount.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium">税额:</span>
+                            <span>¥${invoice.taxAmount.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between border-t pt-3">
+                            <span class="font-bold">价税合计:</span>
+                            <span class="font-bold text-red-600">¥${(invoice.amount + invoice.taxAmount).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="downloadInvoice(${invoice.id})" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                            下载发票
+                        </button>
+                        <button onclick="sendInvoice(${invoice.id})" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                            发送邮箱
+                        </button>
+                    </div>
+                `;
+                
+                modal.classList.remove('hidden');
+            }
+        }
+
+        // 关闭发票模态框
+        function closeInvoiceModal() {
+            const modal = document.getElementById('invoice-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // 下载发票
+        function downloadInvoice(invoiceId) {
+            alert('发票下载功能开发中，敬请期待！');
+        }
+
+        // 发送发票
+        function sendInvoice(invoiceId) {
+            alert('发票发送功能开发中，敬请期待！');
+        }
+
+        // 显示发票
+        function showInvoice(recordId) {
+            const invoice = invoices.find(inv => 
+                paymentHistory.find(record => record.id === recordId)?.parkingName === inv.parkingName
+            );
+            
+            if (invoice) {
+                showInvoiceDetail(invoice);
+            } else {
+                alert('暂无发票信息');
+            }
+        }
+
+        // 初始化图表
+        function initializeCharts() {
+            // 月度消费趋势图表
+            const monthlyChart = echarts.init(document.getElementById('monthly-chart'));
+            const monthlyOption = {
+                tooltip: {
+                    trigger: 'axis'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: {
+                        formatter: '¥{value}'
+                    }
+                },
+                series: [
+                    {
+                        name: '消费金额',
+                        data: [320, 280, 450, 380, 520, 480, 600, 550, 420, 380, 568, 0],
+                        type: 'line',
+                        smooth: true,
+                        itemStyle: {
+                            color: '#3b82f6'
+                        },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0,
+                                y: 0,
+                                x2: 0,
+                                y2: 1,
+                                colorStops: [{
+                                    offset: 0, color: 'rgba(59, 130, 246, 0.3)'
+                                }, {
+                                    offset: 1, color: 'rgba(59, 130, 246, 0.1)'
+                                }]
+                            }
+                        }
+                    }
+                ]
+            };
+            monthlyChart.setOption(monthlyOption);
+
+            // 停车场消费分布图表
+            const parkingChart = echarts.init(document.getElementById('parking-chart'));
+            const parkingOption = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: ¥{c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left'
+                },
+                series: [
+                    {
+                        name: '消费分布',
+                        type: 'pie',
+                        radius: '50%',
+                        data: [
+                            { value: 320, name: '中关村停车场' },
+                            { value: 280, name: '王府井停车场' },
+                            { value: 250, name: '西单停车场' },
+                            { value: 180, name: '东单停车场' },
+                            { value: 150, name: '其他停车场' }
+                        ],
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ]
+            };
+            parkingChart.setOption(parkingOption);
+
+            // 响应式图表
+            window.addEventListener('resize', function() {
+                monthlyChart.resize();
+                parkingChart.resize();
+            });
+        }
+
+        // 更新统计数据
+        function updateStatistics() {
+            const pendingAmount = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
+            const paidAmount = paymentHistory.reduce((sum, p) => sum + p.amount, 0);
+            const monthlyAmount = 568.00; // 模拟本月消费
+            const savingsAmount = 89.00; // 模拟节省金额
+
+            document.getElementById('pending-amount').textContent = `¥${pendingAmount.toFixed(2)}`;
+            document.getElementById('paid-amount').textContent = `¥${paidAmount.toFixed(2)}`;
+            document.getElementById('monthly-amount').textContent = `¥${monthlyAmount.toFixed(2)}`;
+            document.getElementById('savings-amount').textContent = `¥${savingsAmount.toFixed(2)}`;
+        }
+    </script>
+</body>
+</html>

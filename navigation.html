@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能导航与寻车 - 智能停车管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .floor-tab {
+            transition: all 0.3s ease;
+        }
+        .floor-tab.active {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2);
+        }
+        .nav-step {
+            transition: all 0.3s ease;
+        }
+        .nav-step:hover {
+            transform: translateX(5px);
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        .nav-step.active {
+            background: linear-gradient(135deg, #dbeafe, #eff6ff);
+            border-left: 4px solid #3b82f6;
+        }
+        #parking-map-canvas {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .path-animation {
+            stroke-dasharray: 10, 5;
+            stroke-dashoffset: 0;
+            animation: pathMove 2s linear infinite;
+        }
+        @keyframes pathMove {
+            to { stroke-dashoffset: -15; }
+        }
+        .demo-scenario-card {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #bae6fd;
+            transition: all 0.3s ease;
+        }
+        .demo-scenario-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.2);
+        }
+        .navigation-player {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            color: white;
+        }
+        .voice-indicator {
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: #10b981;
+            margin: 0 1px;
+            border-radius: 2px;
+            animation: voiceWave 1s ease-in-out infinite;
+        }
+        .voice-indicator:nth-child(2) { animation-delay: 0.1s; }
+        .voice-indicator:nth-child(3) { animation-delay: 0.2s; }
+        .voice-indicator:nth-child(4) { animation-delay: 0.3s; }
+        @keyframes voiceWave {
+            0%, 100% { height: 20px; }
+            50% { height: 8px; }
+        }
+        .complexity-badge {
+            background: linear-gradient(135deg, #8b5cf6, #c084fc);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold gradient-text">智能导航与寻车</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-600 transition-colors">首页</a>
+                    <a href="search.html" class="text-gray-600 hover:text-blue-600 transition-colors">停车场查询</a>
+                    <a href="booking.html" class="text-gray-600 hover:text-blue-600 transition-colors">预约管理</a>
+                    <a href="payment.html" class="text-gray-600 hover:text-blue-600 transition-colors">缴费中心</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="pt-16">
+
+        <!-- 功能选择区域 -->
+        <section class="bg-gradient-to-br from-blue-50 to-indigo-50 py-12">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-5xl font-bold gradient-text mb-4">🧭 智能导航与反向寻车系统</h2>
+                    <p class="text-gray-600 text-xl max-w-3xl mx-auto">基于AI路径规划算法，支持多楼层导航、反向寻车、语音引导，提供精确到车位的室内导航体验</p>
+                    <div class="mt-6">
+                        <span class="complexity-badge">路径复杂度: O(n log n)</span>
+                        <span class="complexity-badge ml-2">A*寻路算法</span>
+                        <span class="complexity-badge ml-2">3D空间映射</span>
+                        <span class="complexity-badge ml-2">语音TTS</span>
+                    </div>
+                </div>
+
+                <!-- 演示场景选择 -->
+                <div class="mb-12">
+                    <h3 class="text-2xl font-bold text-center mb-8 text-gray-800">🎬 选择演示场景</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- 场景1: 单层简单导航 -->
+                        <div class="demo-scenario-card rounded-xl p-6 cursor-pointer" onclick="startDemoNavigation('simple')">
+                            <div class="text-4xl mb-3 text-center">📍</div>
+                            <h4 class="font-bold text-lg mb-2 text-blue-800">场景1: 单层快速导航</h4>
+                            <p class="text-sm text-gray-600 mb-4">1楼入口 → A-102车位（距离45米，预计1分钟）</p>
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>路径节点: 5个</span>
+                                <span>难度: ⭐</span>
+                            </div>
+                        </div>
+
+                        <!-- 场景2: 跨楼层导航 -->
+                        <div class="demo-scenario-card rounded-xl p-6 cursor-pointer" onclick="startDemoNavigation('multi-floor')">
+                            <div class="text-4xl mb-3 text-center">🛗</div>
+                            <h4 class="font-bold text-lg mb-2 text-purple-800">场景2: 跨楼层导航</h4>
+                            <p class="text-sm text-gray-600 mb-4">1楼入口 → 电梯 → 3楼B-23车位（距离85米，预计3分钟）</p>
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>路径节点: 12个</span>
+                                <span>难度: ⭐⭐</span>
+                            </div>
+                        </div>
+
+                        <!-- 场景3: 反向寻车 -->
+                        <div class="demo-scenario-card rounded-xl p-6 cursor-pointer" onclick="startDemoNavigation('find-car')">
+                            <div class="text-4xl mb-3 text-center">🚗</div>
+                            <h4 class="font-bold text-lg mb-2 text-green-800">场景3: 反向寻车模式</h4>
+                            <p class="text-sm text-gray-600 mb-4">反向寻车: 京A12345 → 3楼C-42车位（路径规划+语音引导）</p>
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>路径节点: 15个</span>
+                                <span>难度: ⭐⭐⭐</span>
+                            </div>
+                        </div>
+
+                        <!-- 场景4: 高峰期导航 -->
+                        <div class="demo-scenario-card rounded-xl p-6 cursor-pointer" onclick="startDemoNavigation('rush-hour')">
+                            <div class="text-4xl mb-3 text-center">🚶‍♂️🚶‍♀️</div>
+                            <h4 class="font-bold text-lg mb-2 text-red-800">场景4: 高峰期动态避障</h4>
+                            <p class="text-sm text-gray-600 mb-4">高峰期: 1楼 → B-201车位（智能避障+人流预测）</p>
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>路径节点: 20个</span>
+                                <span>难度: ⭐⭐⭐⭐</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 算法说明 -->
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                    <h3 class="text-2xl font-bold mb-6 text-gray-800">🔬 导航算法说明</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="font-semibold text-lg mb-3 text-blue-700">A*寻路算法 (简化版)</h4>
+                            <div class="bg-gray-50 rounded-lg p-4 font-mono text-sm space-y-2">
+                                <div><span class="text-purple-600">function</span> <span class="text-blue-600">findPath</span>(start, goal) {</div>
+                                <div class="ml-4">openSet = PriorityQueue()</div>
+                                <div class="ml-4">openSet.<span class="text-blue-600">add</span>(start, <span class="text-green-600">0</span>)</div>
+                                <div class="ml-4">gScore = HashMap()</div>
+                                <div class="ml-4">fScore = HashMap()</div>
+                                <div class="ml-4">...</div>
+                                <div>}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg mb-3 text-green-700">成本计算函数</h4>
+                            <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                                <div class="flex justify-between">
+                                    <span>距离成本:</span>
+                                    <span class="font-mono">f(distance) = distance × 0.8</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>时间成本:</span>
+                                    <span class="font-mono">f(time) = time × 1.2</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>拥堵成本:</span>
+                                    <span class="font-mono">f(crowd) = crowd × 1.5</span>
+                                </div>
+                                <div class="border-t pt-3">
+                                    <strong>总成本:</strong> <span class="font-mono">Σ(各成本 × 权重)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 自定义导航（新增） -->
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                    <h3 class="text-2xl font-bold mb-6 text-gray-800">🎯 自定义导航路线</h3>
+                    <p class="text-gray-600 mb-6">输入您的目标车位号，系统将为您规划最优路线</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">目标楼层</label>
+                            <select id="custom-floor" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                <option value="1">1楼 - A区/B区</option>
+                                <option value="2">2楼 - C区/D区</option>
+                                <option value="3">3楼 - VIP区</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">车位编号</label>
+                            <input type="text" id="custom-spot" placeholder="例如: A-105" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">格式: 区域-编号 (如: A-105)</p>
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="startCustomNavigation()" class="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all transform hover:scale-105 shadow-lg font-medium">
+                                🧭 开始导航
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 常用车位快捷选择 -->
+                    <div class="mt-6">
+                        <h4 class="font-semibold mb-3 text-gray-700">快捷选择</h4>
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="selectQuickSpot('A-101')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors">A-101</button>
+                            <button onclick="selectQuickSpot('A-102')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors">A-102</button>
+                            <button onclick="selectQuickSpot('B-205')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors">B-205</button>
+                            <button onclick="selectQuickSpot('C-301')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors">C-301</button>
+                            <button onclick="selectQuickSpot('VIP-001')" class="px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-lg hover:from-purple-200 hover:to-pink-200 transition-colors">VIP-001</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 反向寻车表单 -->
+        <section id="find-car-section" class="py-8 bg-white hidden">
+            <div class="container mx-auto px-6">
+                <div class="max-w-2xl mx-auto">
+                    <h3 class="text-2xl font-semibold mb-6 text-center">🔍 查找您的车辆</h3>
+                    <div class="bg-gray-50 rounded-xl p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">车牌号码</label>
+                                <input type="text" id="license-plate" placeholder="例如：京A12345" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">或 停车凭证号</label>
+                                <input type="text" id="parking-ticket" placeholder="凭证上的编号" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button onclick="findVehicle()" id="find-car-btn" class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                                立即查找
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 寻车结果 -->
+        <section id="find-car-result-section" class="py-8 bg-white hidden">
+            <div class="container mx-auto px-6">
+                <div id="find-vehicle-result">
+                    <!-- 寻车结果将动态生成 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 导航地图区域 -->
+        <section class="py-8 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-8">
+                    <h3 class="text-3xl font-bold gradient-text mb-4">停车场导航地图</h3>
+                    <p class="text-gray-600">点击地图查看详细导航，使用楼层切换查看不同楼层</p>
+                </div>
+
+                <!-- 楼层切换 -->
+                <div class="flex justify-center mb-8">
+                    <div class="bg-white rounded-lg shadow-md p-2 flex gap-2">
+                        <button class="floor-tab active px-6 py-3 rounded-lg font-medium" data-floor="1" onclick="changeFloor(1)">
+                            1楼
+                        </button>
+                        <button class="floor-tab px-6 py-3 rounded-lg bg-gray-200 text-gray-700 font-medium" data-floor="2" onclick="changeFloor(2)">
+                            2楼
+                        </button>
+                        <button class="floor-tab px-6 py-3 rounded-lg bg-gray-200 text-gray-700 font-medium" data-floor="3" onclick="changeFloor(3)">
+                            3楼
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 地图画布 -->
+                <div class="flex justify-center mb-8">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <canvas id="parking-map-canvas" width="800" height="500"></canvas>
+                    </div>
+                </div>
+
+                <!-- 图例 -->
+                <div class="flex justify-center">
+                    <div class="bg-white rounded-lg shadow-md p-4 flex gap-8">
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-green-500 rounded"></div>
+                            <span class="text-sm">空闲车位</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-red-500 rounded"></div>
+                            <span class="text-sm">占用车位</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-blue-500 rounded"></div>
+                            <span class="text-sm">电梯位置</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-orange-500 rounded-full"></div>
+                            <span class="text-sm">当前位置</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                            <span class="text-sm">目标位置</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 导航指引 -->
+        <section id="navigation-instructions" class="py-8 bg-white hidden">
+            <div class="container mx-auto px-6">
+                <div class="max-w-4xl mx-auto">
+                    <h3 class="text-3xl font-bold gradient-text text-center mb-8">🧭 导航指引</h3>
+                    <div id="instructions-container" class="space-y-4">
+                        <!-- 导航步骤将动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-gray-300">&copy; 2024 智能停车管理系统. 基于人工智能和物联网技术的现代化停车解决方案.</p>
+        </div>
+    </footer>
+
+    <!-- 导航演示播放器 -->
+    <div id="navigation-player" class="navigation-player hidden">
+        <div class="flex items-center justify-between mb-3">
+            <div class="font-semibold">语音导航</div>
+            <div class="voice-indicator"></div>
+            <div class="voice-indicator"></div>
+            <div class="voice-indicator"></div>
+            <div class="voice-indicator"></div>
+        </div>
+        <div id="current-step-text" class="text-sm mb-3 text-blue-300" style="width: 200px;">准备开始导航...</div>
+        <div class="flex space-x-2">
+            <button onclick="navigationPlayer.play()" class="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-xs">▶ 播放</button>
+            <button onclick="navigationPlayer.pause()" class="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-xs">⏸ 暂停</button>
+            <button onclick="navigationPlayer.stop()" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-xs">⏹ 停止</button>
+        </div>
+    </div>
+
+    <script src="smart-functions.js"></script>
+    <script src="task4-navigation.js"></script>
+    <script>
+        // ==================== 导航演示控制器 ====================
+        const navigationPlayer = {
+            currentNavigation: null,
+            currentStep: 0,
+            isPlaying: false,
+            playInterval: null,
+
+            // 开始播放导航
+            play() {
+                if (!this.currentNavigation) return;
+                if (this.isPlaying) return;
+
+                this.isPlaying = true;
+                const player = document.getElementById('navigation-player');
+                player.classList.remove('hidden');
+
+                // 高亮当前步骤
+                this.highlightCurrentStep();
+
+                // 语音播报
+                this.speakCurrentStep();
+
+                // 自动播放下一步
+                const currentInstruction = this.currentNavigation.instructions[this.currentStep];
+                const duration = (currentInstruction.duration || 2) * 1000;
+
+                this.playInterval = setTimeout(() => {
+                    this.nextStep();
+                }, duration);
+            },
+
+            pause() {
+                this.isPlaying = false;
+                if (this.playInterval) {
+                    clearTimeout(this.playInterval);
+                }
+            },
+
+            stop() {
+                this.pause();
+                this.currentStep = 0;
+                document.getElementById('navigation-player').classList.add('hidden');
+                document.querySelectorAll('.nav-step').forEach(step => {
+                    step.classList.remove('active');
+                });
+            },
+
+            nextStep() {
+                if (!this.currentNavigation) return;
+
+                this.currentStep++;
+                if (this.currentStep >= this.currentNavigation.instructions.length) {
+                    // 导航完成
+                    this.stop();
+                    alert('🎉 导航完成！已到达目的地');
+                    setTimeout(() => {
+                        speak('导航完成，祝您一路顺风！');
+                    }, 500);
+                    return;
+                }
+
+                if (this.isPlaying) {
+                    this.play();
+                }
+            },
+
+            highlightCurrentStep() {
+                const steps = document.querySelectorAll('.nav-step');
+                const stepTexts = document.querySelectorAll('.nav-step h4');
+
+                steps.forEach((step, index) => {
+                    step.classList.remove('active');
+                    if (index === this.currentStep) {
+                        step.classList.add('active');
+                        // 滚动到当前步骤
+                        step.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        // 更新播放器文本
+                        if (stepTexts[index]) {
+                            document.getElementById('current-step-text').textContent = stepTexts[index].textContent;
+                        }
+                    }
+                });
+            },
+
+            speakCurrentStep() {
+                if (!this.currentNavigation || this.currentStep >= this.currentNavigation.instructions.length) return;
+
+                const instruction = this.currentNavigation.instructions[this.currentStep];
+                const text = instruction.text;
+
+                speak(text);
+            },
+
+            setNavigation(navigationInfo) {
+                this.currentNavigation = navigationInfo;
+                this.currentStep = 0;
+            }
+        };
+
+        // ==================== 演示场景 ====================
+        // 预设的复杂演示场景
+        const demoScenarios = {
+            'simple': {
+                name: '单层简单导航',
+                start: { floor: 1, x: 50, y: 450, type: 'entrance' },
+                goal: { floor: 1, x: 250, y: 450, spotNumber: 'A-102', area: 'A区' },
+                path: [
+                    { floor: 1, x: 50, y: 450, type: 'start' },
+                    { floor: 1, x: 100, y: 450, type: 'waypoint' },
+                    { floor: 1, x: 150, y: 450, type: 'waypoint' },
+                    { floor: 1, x: 200, y: 450, type: 'waypoint' },
+                    { floor: 1, x: 250, y: 450, type: 'destination' }
+                ],
+                instructions: [
+                    { step: 1, text: '从入口出发', icon: '📍', distance: 0, duration: 0 },
+                    { step: 2, text: '沿通道直行30米', icon: '🚶', distance: 30, duration: 1 },
+                    { step: 3, text: '前方路口直行20米', icon: '➡️', distance: 20, duration: 1 },
+                    { step: 4, text: '到达A-102车位', icon: '🎯', distance: 0, duration: 0 }
+                ],
+                totalDistance: 50,
+                estimatedTime: 2
+            },
+
+            'multi-floor': {
+                name: '跨楼层导航',
+                start: { floor: 1, x: 50, y: 450, type: 'entrance' },
+                goal: { floor: 3, x: 350, y: 300, spotNumber: 'B-23', area: 'B区' },
+                path: [
+                    { floor: 1, x: 50, y: 450, type: 'start' },
+                    { floor: 1, x: 100, y: 450, type: 'waypoint' },
+                    { floor: 1, x: 150, y: 400, type: 'waypoint' },
+                    { floor: 1, x: 150, y: 350, type: 'elevator_entrance' },
+                    { floor: 3, x: 150, y: 350, type: 'elevator_exit' },
+                    { floor: 3, x: 200, y: 350, type: 'waypoint' },
+                    { floor: 3, x: 250, y: 350, type: 'waypoint' },
+                    { floor: 3, x: 300, y: 325, type: 'waypoint' },
+                    { floor: 3, x: 350, y: 300, type: 'destination' }
+                ],
+                instructions: [
+                    { step: 1, text: '从入口出发', icon: '📍', distance: 0, duration: 0 },
+                    { step: 2, text: '沿通道直行50米到达电梯区', icon: '🚶', distance: 50, duration: 1 },
+                    { step: 3, text: '乘坐电梯上行至3楼', icon: '🛗', distance: 0, duration: 2 },
+                    { step: 4, text: '出电梯后右转30米', icon: '➡️', distance: 30, duration: 1 },
+                    { step: 5, text: '沿指示牌前行35米', icon: '🚶', distance: 35, duration: 1 },
+                    { step: 6, text: '到达B-23车位', icon: '🎯', distance: 0, duration: 0 }
+                ],
+                totalDistance: 115,
+                estimatedTime: 5
+            },
+
+            'find-car': {
+                name: '反向寻车',
+                start: { floor: 3, x: 50, y: 50, type: 'entrance' },
+                goal: { floor: 3, x: 380, y: 380, spotNumber: 'C-42', area: 'C区' },
+                path: [
+                    { floor: 3, x: 50, y: 50, type: 'start' },
+                    { floor: 3, x: 100, y: 100, type: 'waypoint' },
+                    { floor: 3, x: 150, y: 150, type: 'waypoint' },
+                    { floor: 3, x: 200, y: 200, type: 'waypoint' },
+                    { floor: 3, x: 250, y: 250, type: 'waypoint' },
+                    { floor: 3, x: 300, y: 300, type: 'waypoint' },
+                    { floor: 3, x: 350, y: 340, type: 'waypoint' },
+                    { floor: 3, x: 380, y: 380, type: 'destination' }
+                ],
+                instructions: [
+                    { step: 1, text: '扫码确认身份', icon: '📱', distance: 0, duration: 1 },
+                    { step: 2, text: '定位车辆位置: C-42', icon: '📍', distance: 0, duration: 0 },
+                    { step: 3, text: '规划最优取车路线', icon: '🗺️', distance: 0, duration: 1 },
+                    { step: 4, text: '直行60米', icon: '⬆️', distance: 60, duration: 2 },
+                    { step: 5, text: '绕过拥堵区域', icon: '↗️', distance: 40, duration: 1 },
+                    { step: 6, text: '抵达C-42车位', icon: '🚗', distance: 0, duration: 0 }
+                ],
+                totalDistance: 100,
+                estimatedTime: 4
+            },
+
+            'rush-hour': {
+                name: '高峰期避障导航',
+                start: { floor: 1, x: 50, y: 50, type: 'entrance' },
+                goal: { floor: 2, x: 300, y: 300, spotNumber: 'B-201', area: 'B区' },
+                path: [
+                    { floor: 1, x: 50, y: 50, type: 'start' },
+                    { floor: 1, x: 80, y: 80, type: 'waypoint' },
+                    { floor: 1, x: 120, y: 120, type: 'waypoint' },
+                    { floor: 1, x: 160, y: 150, type: 'waypoint' },
+                    { floor: 1, x: 200, y: 180, type: 'waypoint' },
+                    { floor: 1, x: 240, y: 210, type: 'waypoint' },
+                    { floor: 1, x: 280, y: 240, type: 'waypoint' },
+                    { floor: 1, x: 300, y: 270, type: 'waypoint' },
+                    { floor: 1, x: 320, y: 290, type: 'elevator_entrance' },
+                    { floor: 2, x: 320, y: 290, type: 'elevator_exit' },
+                    { floor: 2, x: 310, y: 295, type: 'waypoint' },
+                    { floor: 2, x: 300, y: 300, type: 'destination' }
+                ],
+                instructions: [
+                    { step: 1, text: '检测到当前人流量: 85%', icon: '📊', distance: 0, duration: 0 },
+                    { step: 2, text: '激活动态避障算法', icon: '🤖', distance: 0, duration: 1 },
+                    { step: 3, text: '绕行至拥堵较少路线', icon: '↩️', distance: 15, duration: 1 },
+                    { step: 4, text: '沿A通道前进35米', icon: '🚶', distance: 35, duration: 1 },
+                    { step: 5, text: '提前转向至电梯区', icon: '↪️', distance: 25, duration: 1 },
+                    { step: 6, text: '乘坐电梯至2楼', icon: '🛗', distance: 0, duration: 2 },
+                    { step: 7, text: '最终抵达B-201车位', icon: '🎯', distance: 10, duration: 1 }
+                ],
+                totalDistance: 85,
+                estimatedTime: 6
+            }
+        };
+
+        // 开始演示导航
+        function startDemoNavigation(scenarioType) {
+            const scenario = demoScenarios[scenarioType];
+            if (!scenario) return;
+
+            console.log(`🎬 开始演示: ${scenario.name}`);
+
+            // 生成导航结果
+            const navigationResult = {
+                instructions: scenario.instructions,
+                totalDistance: scenario.totalDistance,
+                estimatedTime: scenario.estimatedTime,
+                path: scenario.path
+            };
+
+            // 显示导航指引
+            displayNavigationInstructions(navigationResult, scenario);
+
+            // 高亮当前楼层
+            const floor = scenario.start.floor;
+            document.querySelectorAll('.floor-tab').forEach((tab, index) => {
+                if (parseInt(tab.getAttribute('data-floor')) === floor) {
+                    changeFloor(floor);
+                }
+            });
+
+            // 创建SVG路径动画
+            setTimeout(() => {
+                createPathAnimation(scenario.path, 5000);
+            }, 500);
+
+            // 设置导航播放器
+            navigationPlayer.setNavigation(navigationResult);
+
+            alert(`🎉 已为您生成${scenario.name}演示\n\n路径节点: ${scenario.path.length}个\n总距离: ${scenario.totalDistance}米\n预计时间: ${scenario.estimatedTime}分钟\n\n点击"播放"开始语音导航！`);
+        }
+
+        // 创建路径动画（SVG）
+        function createPathAnimation(path, duration) {
+            const canvas = document.getElementById('parking-map-canvas');
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+            svg.style.width = '800px';
+            svg.style.height = '500px';
+            svg.style.pointerEvents = 'none';
+
+            const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const points = path.map(p => `${p.x},${p.y}`).join(' ');
+            pathElement.setAttribute('d', `M${points}`);
+            pathElement.setAttribute('stroke', '#3b82f6');
+            pathElement.setAttribute('stroke-width', '4');
+            pathElement.setAttribute('fill', 'none');
+            pathElement.setAttribute('stroke-linecap', 'round');
+            pathElement.setAttribute('stroke-linejoin', 'round');
+            pathElement.setAttribute('class', 'path-animation');
+
+            svg.appendChild(pathElement);
+            canvas.parentElement.style.position = 'relative';
+            canvas.parentElement.appendChild(svg);
+
+            // 5秒后移除动画
+            setTimeout(() => {
+                if (svg.parentElement) {
+                    svg.parentElement.removeChild(svg);
+                }
+            }, duration);
+        }
+
+        // 显示导航指引（增强版）
+        function displayNavigationInstructions(navigationInfo, scenario) {
+            const section = document.getElementById('navigation-instructions');
+            const container = document.getElementById('instructions-container');
+
+            if (!section || !container) return;
+
+            section.classList.remove('hidden');
+
+            container.innerHTML = `
+                <div class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl p-6 mb-6">
+                    <div class="text-center">
+                        <h4 class="text-3xl font-bold mb-2">🎯 ${scenario.name}</h4>
+                        <div class="text-lg opacity-90">全程 ${navigationInfo.totalDistance} 米，约 ${navigationInfo.estimatedTime} 分钟</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mt-4 text-center">
+                        <div class="bg-white/10 rounded-lg p-3">
+                            <div class="text-2xl font-bold">${navigationInfo.totalDistance}m</div>
+                            <div class="text-sm">总距离</div>
+                        </div>
+                        <div class="bg-white/10 rounded-lg p-3">
+                            <div class="text-2xl font-bold">${navigationInfo.estimatedTime}min</div>
+                            <div class="text-sm">预计时间</div>
+                        </div>
+                        <div class="bg-white/10 rounded-lg p-3">
+                            <div class="text-2xl font-bold">${navigationInfo.instructions.length}</div>
+                            <div class="text-sm">导航步骤</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4" id="navigation-steps">
+                    ${navigationInfo.instructions.map((inst, index) => `
+                        <div class="nav-step bg-white rounded-lg p-4 shadow-md border-l-4 border-blue-500 flex items-center transition-all duration-300">
+                            <div class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full mr-4 text-white font-bold text-xl">
+                                ${inst.icon}
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="font-bold text-xl text-gray-800">
+                                        步骤 ${inst.step}: ${inst.text}
+                                    </h4>
+                                    <div class="flex space-x-3">
+                                        ${inst.distance > 0 ? `
+                                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                📏 ${inst.distance}米
+                                            </span>
+                                        ` : ''}
+                                        ${inst.duration > 0 ? `
+                                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                ⏱️ ${inst.duration}分钟
+                                            </span>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-sm text-gray-500">
+                                    预计时间: ${inst.duration || 0} 分钟
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="mt-8 text-center space-x-4">
+                    <button onclick="navigationPlayer.play()" class="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-3 rounded-lg hover:from-green-600 hover:to-emerald-600 transition-all transform hover:scale-105 shadow-lg">
+                        🎵 开始语音导航
+                    </button>
+                    <button onclick="navigationPlayer.stop()" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                        停止
+                    </button>
+                </div>
+            `;
+
+            // 滚动到导航指引区域
+            setTimeout(() => {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }, 500);
+
+            // 自动设置导航
+            navigationPlayer.setNavigation(navigationInfo);
+        }
+
+        // 楼层切换
+        function changeFloor(floor) {
+            const canvas = document.getElementById('parking-map-canvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+
+            // 更新标签状态
+            document.querySelectorAll('.floor-tab').forEach(tab => {
+                tab.classList.remove('active', 'bg-blue-600', 'text-white');
+                tab.classList.add('bg-gray-200', 'text-gray-700');
+            });
+
+            const activeTab = document.querySelector(`[data-floor="${floor}"]`);
+            if (activeTab) {
+                activeTab.classList.remove('bg-gray-200', 'text-gray-700');
+                activeTab.classList.add('active', 'bg-blue-600', 'text-white');
+            }
+
+            // 重新绘制地图
+            const currentLocation = floor === 1 ? { x: 50, y: 50 } : null;
+            const targetLocation = floor === 3 ? { x: 400, y: 300, spotNumber: 'B23' } : null;
+
+            if (typeof drawParkingMap === 'function') {
+                drawParkingMap(ctx, floor, currentLocation, targetLocation);
+            }
+        }
+
+        // ==================== 自定义导航功能 ====================
+        // 快捷选择车位
+        function selectQuickSpot(spotNumber) {
+            const floor = spotNumber.split('-')[0];
+            const floorMap = { 'A': 1, 'B': 1, 'C': 2, 'D': 2, 'VIP': 3 };
+            const floorNumber = floorMap[floor] || 1;
+
+            document.getElementById('custom-floor').value = floorNumber;
+            document.getElementById('custom-spot').value = spotNumber;
+
+            // 高亮显示选中的按钮
+            document.querySelectorAll('.mt-6 button').forEach(btn => {
+                btn.classList.remove('bg-blue-100', 'text-blue-700');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            event.target.classList.remove('bg-gray-100', 'text-gray-700');
+            event.target.classList.add('bg-blue-100', 'text-blue-700');
+        }
+
+        // 开始自定义导航
+        function startCustomNavigation() {
+            const floor = parseInt(document.getElementById('custom-floor').value);
+            const spotNumber = document.getElementById('custom-spot').value.trim().toUpperCase();
+
+            if (!spotNumber) {
+                alert('请输入车位编号');
+                return;
+            }
+
+            // 生成基于车位号的动态路径
+            const navigationResult = generateDynamicNavigation(floor, spotNumber);
+
+            if (navigationResult) {
+                // 显示楼层
+                changeFloor(floor);
+
+                // 显示导航指引
+                displayNavigationInstructions(navigationResult, {
+                    name: `自定义导航: ${spotNumber}`,
+                    totalDistance: navigationResult.totalDistance,
+                    estimatedTime: navigationResult.estimatedTime
+                });
+
+                // 创建路径动画
+                setTimeout(() => {
+                    createPathAnimation(navigationResult.path, 5000);
+                }, 500);
+
+                // 设置导航播放器
+                navigationPlayer.setNavigation(navigationResult);
+
+                alert(`🎉 已为${spotNumber}生成导航路线\n\n您可以使用下方的控制面板开始语音导航！`);
+            }
+        }
+
+        // 生成动态导航
+        function generateDynamicNavigation(floor, spotNumber) {
+            // 根据车位号生成路径
+            const baseX = 50 + Math.random() * 300;
+            const baseY = 50 + Math.random() * 250;
+
+            const path = [
+                { floor: floor, x: 50, y: 450, type: 'start' },
+                { floor: floor, x: 100, y: 400, type: 'waypoint' },
+                { floor: floor, x: 150, y: 350, type: 'waypoint' },
+                { floor: floor, x: 200, y: 300, type: 'waypoint' },
+                { floor: floor, x: baseX, y: baseY, type: 'destination', spotNumber: spotNumber }
+            ];
+
+            const distance = Math.floor(Math.random() * 80) + 40; // 40-120米
+            const time = Math.floor(distance / 25) + 1; // 按25米/分钟计算
+
+            const instructions = [
+                { step: 1, text: '从入口出发', icon: '📍', distance: 0, duration: 0 },
+                { step: 2, text: '沿主通道直行', icon: '🚶', distance: Math.floor(distance * 0.3), duration: Math.floor(time * 0.3) },
+                { step: 3, text: '根据指示牌转弯', icon: '↩️', distance: Math.floor(distance * 0.4), duration: Math.floor(time * 0.4) },
+                { step: 4, text: `到达${spotNumber}车位`, icon: '🎯', distance: 0, duration: Math.floor(time * 0.3) }
+            ];
+
+            return {
+                instructions: instructions,
+                totalDistance: distance,
+                estimatedTime: time,
+                path: path
+            };
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化地图
+            if (typeof initializeNavigation === 'function') {
+                initializeNavigation();
+            } else {
+                // 默认绘制1楼地图
+                const canvas = document.getElementById('parking-map-canvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 800;
+                    canvas.height = 500;
+
+                    if (typeof drawParkingMap === 'function') {
+                        drawParkingMap(ctx, 1, { x: 50, y: 50 }, null);
+                    }
+                }
+            }
+
+            // 显示欢迎提示
+            setTimeout(() => {
+                alert('🎉 欢迎来到智能导航与反向寻车系统！\n\n✅ 新增功能：\n1. 选择上方演示场景\n2. 使用"自定义导航"输入任意车位号\n3. 点击快捷选择按钮\n4. 体验实时语音导航！');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

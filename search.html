@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>停车场查询 - 智能停车管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .parking-card {
+            transition: all 0.3s ease;
+        }
+        .parking-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .status-available { color: #10b981; }
+        .status-busy { color: #f59e0b; }
+        .status-full { color: #ef4444; }
+        .map-container {
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .filter-button {
+            transition: all 0.3s ease;
+        }
+        .filter-button.active {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold gradient-text">智能停车管理</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-600 transition-colors">首页</a>
+                    <a href="search.html" class="text-blue-600 font-medium hover:text-blue-800 transition-colors">停车场查询</a>
+                    <a href="booking.html" class="text-gray-600 hover:text-blue-600 transition-colors">预约管理</a>
+                    <a href="payment.html" class="text-gray-600 hover:text-blue-600 transition-colors">缴费中心</a>
+                    <button onclick="showAdminLogin()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        管理员登录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="pt-16">
+        <!-- 搜索区域 -->
+        <section class="bg-white py-8 shadow-sm">
+            <div class="container mx-auto px-6">
+                <div class="flex flex-col lg:flex-row gap-6 items-center">
+                    <div class="flex-1">
+                        <div class="relative">
+                            <input type="text" id="search-input" placeholder="搜索停车场位置、名称或地址..." 
+                                   class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                🔍
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="searchParkingLots()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                            搜索
+                        </button>
+                        <button onclick="toggleFilters()" class="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors">
+                            筛选
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 筛选条件 -->
+                <div id="filter-panel" class="mt-6 hidden">
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold mb-4">筛选条件</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">价格范围</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                    <option>全部价格</option>
+                                    <option>0-10元/小时</option>
+                                    <option>10-20元/小时</option>
+                                    <option>20-30元/小时</option>
+                                    <option>30元以上/小时</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">车位状态</label>
+                                <div class="flex gap-2">
+                                    <button class="filter-button active px-3 py-2 rounded-lg border" data-status="all">全部</button>
+                                    <button class="filter-button px-3 py-2 rounded-lg border" data-status="available">空闲</button>
+                                    <button class="filter-button px-3 py-2 rounded-lg border" data-status="busy">紧张</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">距离范围</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                                    <option>全部距离</option>
+                                    <option>1公里内</option>
+                                    <option>3公里内</option>
+                                    <option>5公里内</option>
+                                    <option>10公里内</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 智能推荐 -->
+        <section class="py-8 bg-gradient-to-br from-blue-50 to-indigo-50">
+            <div class="container mx-auto px-6">
+                <div id="smart-recommendations">
+                    <!-- 智能推荐内容将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 地图和列表区域 -->
+        <section class="py-8">
+            <div class="container mx-auto px-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- 地图区域 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-semibold mb-4">停车场地图</h2>
+                        <div id="map" class="map-container"></div>
+                    </div>
+                    
+                    <!-- 停车场列表 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold">停车场列表</h2>
+                            <div class="flex gap-2">
+                                <button onclick="switchView('list')" id="list-view-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg">列表</button>
+                                <button onclick="switchView('card')" id="card-view-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">卡片</button>
+                            </div>
+                        </div>
+                        
+                        <div id="parking-list" class="space-y-4 max-h-96 overflow-y-auto">
+                            <!-- 停车场项目将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 推荐停车场 -->
+        <section class="py-8 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl font-bold text-center mb-8 gradient-text">推荐停车场</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="recommended-parking">
+                    <!-- 推荐停车场将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-gray-300">&copy; 2024 智能停车管理系统. 基于人工智能和物联网技术的现代化停车解决方案.</p>
+        </div>
+    </footer>
+
+    <!-- 停车场详情模态框 -->
+    <div id="parking-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold" id="modal-title">停车场详情</h3>
+                <button onclick="closeParkingDetail()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="modal-content">
+                <!-- 详情内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="mockData.js"></script>
+    <script src="main.js"></script>
+    <script src="smart-functions.js"></script>
+    <script src="task3-recommendation.js"></script>
+    <script>
+        // 停车场查询页面特定功能
+        let map;
+        let parkingData = [];
+        let currentView = 'list';
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMap();
+            generateParkingData();
+
+            // 初始化智能推荐系统
+            if (typeof initializeRecommendation === 'function') {
+                initializeRecommendation();
+            }
+
+            // 每10秒更新价格显示（动态定价）
+            setInterval(() => {
+                if (typeof updateParkingListPrices === 'function') {
+                    updateParkingListPrices();
+                }
+            }, 10000);
+
+            displayParkingLots();
+            displayRecommendedParking();
+            initializeFilterButtons();
+        });
+
+        // 初始化地图
+        function initializeMap() {
+            map = L.map('map').setView([39.9042, 116.4074], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // 添加一些示例停车场标记
+            const parkingLocations = [
+                { lat: 39.9042, lng: 116.4074, name: '中关村停车场', status: 'available' },
+                { lat: 39.9100, lng: 116.4200, name: '王府井停车场', status: 'busy' },
+                { lat: 39.8900, lng: 116.3900, name: '西单停车场', status: 'available' },
+                { lat: 39.9200, lng: 116.4300, name: '东单停车场', status: 'full' }
+            ];
+
+            parkingLocations.forEach(parking => {
+                const color = parking.status === 'available' ? 'green' : 
+                             parking.status === 'busy' ? 'orange' : 'red';
+                
+                L.marker([parking.lat, parking.lng])
+                    .addTo(map)
+                    .bindPopup(`<b>${parking.name}</b><br>状态: ${parking.status}`)
+                    .setIcon(L.divIcon({
+                        className: `custom-marker ${color}`,
+                        html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+                        iconSize: [20, 20]
+                    }));
+            });
+        }
+
+        // 生成停车场数据
+        function generateParkingData() {
+            const names = [
+                '机电学馆停车场', '建筑学馆停车场', '大成停车场', '逸夫停车场',
+                '何世礼停车场', '采矿学馆停车场', '冶金学馆停车场'
+            ];
+
+            const statuses = ['available', 'busy', 'full'];
+            const prices = [5, 8, 10, 12, 15, 18, 20];
+
+            parkingData = names.map((name, index) => {
+                const status = statuses[Math.floor(Math.random() * statuses.length)];
+                const totalSpots = Math.floor(Math.random() * 200) + 50;
+                const availableSpots = status === 'full' ? 0 : 
+                                     status === 'busy' ? Math.floor(totalSpots * 0.2) :
+                                     Math.floor(totalSpots * 0.6);
+                
+                return {
+                    id: index + 1,
+                    name: name,
+                    address: `沈阳市${name.split('停车场')[0]}`,
+                    status: status,
+                    totalSpots: totalSpots,
+                    availableSpots: availableSpots,
+                    price: prices[Math.floor(Math.random() * prices.length)],
+                    distance: (Math.random() * 10 + 0.5).toFixed(1),
+                    rating: (Math.random() * 2 + 3).toFixed(1),
+                    image: `https://picsum.photos/seed/${index}/400/300.jpg`
+                };
+            });
+        }
+
+        // 显示停车场列表
+        function displayParkingLots() {
+            const container = document.getElementById('parking-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            parkingData.forEach(parking => {
+                const parkingElement = createParkingElement(parking);
+                container.appendChild(parkingElement);
+            });
+        }
+
+        // 创建停车场元素
+        function createParkingElement(parking) {
+            const div = document.createElement('div');
+            div.className = 'parking-card bg-gray-50 rounded-lg p-4 cursor-pointer';
+            div.setAttribute('data-lot-id', `P${String(parking.id).padStart(3, '0')}`);
+            div.onclick = () => showParkingDetail(parking);
+
+            const statusClass = parking.status === 'available' ? 'status-available' :
+                               parking.status === 'busy' ? 'status-busy' : 'status-full';
+            const statusText = parking.status === 'available' ? '空闲' :
+                              parking.status === 'busy' ? '紧张' : '已满';
+
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-semibold text-lg">${parking.name}</h3>
+                    <span class="${statusClass} font-medium">${statusText}</span>
+                </div>
+                <div class="text-sm text-gray-600 mb-2">${parking.address}</div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="dynamic-price">
+                        <strong>💰 ${parking.price}元/小时</strong>
+                    </span>
+                    <span>📍 ${parking.distance}km</span>
+                    <span>🅿️ ${parking.availableSpots}/${parking.totalSpots}</span>
+                </div>
+                <div class="mt-3 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <span class="text-yellow-500">⭐</span>
+                        <span class="ml-1 text-sm">${parking.rating}</span>
+                    </div>
+                    <button onclick="event.stopPropagation(); bookParkingSpot(${parking.id})"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        立即预约
+                    </button>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // 计算停车场推荐指数（基于多维特征评分模型）
+        function calculateParkingScore(parking, weights = { distance: 0.4, price: 0.3, availability: 0.3 }) {
+            // 距离得分（距离越近得分越高，5km以上得0分）
+            const distanceScore = Math.max(0, 5 - parseFloat(parking.distance)) * 20; // 0-100分
+
+            // 价格得分（价格越低得分越高，20元以上得0分）
+            const priceScore = Math.max(0, 20 - parking.price) * 5; // 0-100分
+
+            // 空位率得分
+            const availabilityRatio = parking.availableSpots / parking.totalSpots;
+            const availabilityScore = availabilityRatio * 100; // 0-100分
+
+            // 加权综合得分
+            const finalScore = (
+                distanceScore * weights.distance +
+                priceScore * weights.price +
+                availabilityScore * weights.availability
+            );
+
+            // 生成推荐理由
+            const reasons = [];
+            if (distanceScore > 60) reasons.push('距离近');
+            if (priceScore > 60) reasons.push('价格低');
+            if (availabilityScore > 60) reasons.push('空位多');
+
+            return {
+                score: Math.round(finalScore),
+                reasons: reasons,
+                details: {
+                    distance: Math.round(distanceScore),
+                    price: Math.round(priceScore),
+                    availability: Math.round(availabilityScore)
+                }
+            };
+        }
+
+        // 显示智能推荐停车场
+        function displayRecommendedParking() {
+            const container = document.getElementById('recommended-parking');
+            if (!container) return;
+
+            // 加载权重配置（可从管理员配置）
+            const weights = JSON.parse(localStorage.getItem('smartparking_recommend_weights') || '{"distance":0.4,"price":0.3,"availability":0.3}');
+
+            // 为每个停车场计算评分
+            const parkingWithScores = parkingData.map(parking => {
+                const scoreData = calculateParkingScore(parking, weights);
+                return {
+                    ...parking,
+                    recommendationScore: scoreData.score,
+                    recommendationReasons: scoreData.reasons,
+                    scoreDetails: scoreData.details
+                };
+            });
+
+            // 按推荐分数排序，取前6个
+            const recommended = parkingWithScores
+                .sort((a, b) => b.recommendationScore - a.recommendationScore)
+                .slice(0, 6);
+
+            container.innerHTML = '';
+
+            recommended.forEach(parking => {
+                const div = document.createElement('div');
+                div.className = 'bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-all cursor-pointer relative';
+                div.onclick = () => showParkingDetail(parking);
+
+                const statusClass = parking.status === 'available' ? 'status-available' :
+                                   parking.status === 'busy' ? 'status-busy' : 'status-full';
+                const statusText = parking.status === 'available' ? '空闲' :
+                                  parking.status === 'busy' ? '紧张' : '已满';
+
+                // 推荐指数徽章
+                const scoreBadgeColor = parking.recommendationScore >= 80 ? 'green' :
+                                       parking.recommendationScore >= 60 ? 'blue' : 'yellow';
+
+                div.innerHTML = `
+                    <div class="absolute top-4 right-4 z-10">
+                        <div class="bg-${scoreBadgeColor}-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                            推荐指数 ${parking.recommendationScore}%
+                        </div>
+                    </div>
+                    <img src="${parking.image}" alt="${parking.name}" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="font-semibold text-lg">${parking.name}</h3>
+                            <span class="${statusClass} font-medium text-sm">${statusText}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-3">${parking.address}</div>
+
+                        <!-- 推荐理由 -->
+                        ${parking.recommendationReasons.length > 0 ? `
+                            <div class="mb-3">
+                                <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mr-2">
+                                    推荐理由：${parking.recommendationReasons.join('、')}
+                                </span>
+                            </div>
+                        ` : ''}
+
+                        <div class="flex justify-between items-center text-sm mb-3">
+                            <span>💰 ${parking.price}元/小时</span>
+                            <span>📍 ${parking.distance}km</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <span class="text-yellow-500">⭐</span>
+                                <span class="ml-1 text-sm">${parking.rating}</span>
+                            </div>
+                            <button onclick="event.stopPropagation(); bookParkingSpot(${parking.id})"
+                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                立即预约
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        // 切换筛选面板
+        function toggleFilters() {
+            const panel = document.getElementById('filter-panel');
+            if (panel) {
+                panel.classList.toggle('hidden');
+            }
+        }
+
+        // 切换视图
+        function switchView(view) {
+            currentView = view;
+            const listBtn = document.getElementById('list-view-btn');
+            const cardBtn = document.getElementById('card-view-btn');
+            
+            if (view === 'list') {
+                listBtn.className = 'px-4 py-2 bg-blue-600 text-white rounded-lg';
+                cardBtn.className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg';
+            } else {
+                listBtn.className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg';
+                cardBtn.className = 'px-4 py-2 bg-blue-600 text-white rounded-lg';
+            }
+            
+            displayParkingLots();
+        }
+
+        // 初始化筛选按钮
+        function initializeFilterButtons() {
+            const filterButtons = document.querySelectorAll('.filter-button');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const status = this.dataset.status;
+                    filterParkingLots(status);
+                });
+            });
+        }
+
+        // 筛选停车场
+        function filterParkingLots(status) {
+            let filteredData = parkingData;
+            
+            if (status !== 'all') {
+                filteredData = parkingData.filter(parking => parking.status === status);
+            }
+            
+            const container = document.getElementById('parking-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            filteredData.forEach(parking => {
+                const parkingElement = createParkingElement(parking);
+                container.appendChild(parkingElement);
+            });
+        }
+
+        // 显示停车场详情
+        function showParkingDetail(parking) {
+            const modal = document.getElementById('parking-detail-modal');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+            
+            if (modal && title && content) {
+                title.textContent = parking.name;
+                
+                const statusClass = parking.status === 'available' ? 'status-available' :
+                                   parking.status === 'busy' ? 'status-busy' : 'status-full';
+                const statusText = parking.status === 'available' ? '空闲' :
+                                  parking.status === 'busy' ? '紧张' : '已满';
+                
+                content.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <img src="${parking.image}" alt="${parking.name}" class="w-full h-48 object-cover rounded-lg">
+                        </div>
+                        <div>
+                            <div class="mb-4">
+                                <h4 class="font-semibold mb-2">基本信息</h4>
+                                <p class="text-sm text-gray-600 mb-1">地址: ${parking.address}</p>
+                                <p class="text-sm text-gray-600 mb-1">状态: <span class="${statusClass}">${statusText}</span></p>
+                                <p class="text-sm text-gray-600 mb-1">价格: ${parking.price}元/小时</p>
+                                <p class="text-sm text-gray-600 mb-1">距离: ${parking.distance}km</p>
+                                <p class="text-sm text-gray-600">评分: ${parking.rating} ⭐</p>
+                            </div>
+                            <div class="mb-4">
+                                <h4 class="font-semibold mb-2">车位信息</h4>
+                                <p class="text-sm text-gray-600">总车位数: ${parking.totalSpots}</p>
+                                <p class="text-sm text-gray-600">空闲车位: ${parking.availableSpots}</p>
+                                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: ${(parking.availableSpots / parking.totalSpots) * 100}%"></div>
+                                </div>
+                            </div>
+                            <button onclick="bookParkingSpot(${parking.id})" 
+                                    class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                立即预约车位
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                modal.classList.remove('hidden');
+            }
+        }
+
+        // 关闭停车场详情
+        function closeParkingDetail() {
+            const modal = document.getElementById('parking-detail-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // 预约停车场
+        function bookParkingSpot(parkingId) {
+            console.log('预约停车场ID:', parkingId);
+            // 跳转到预约页面
+            window.location.href = `booking.html?parkingId=${parkingId}`;
+        }
+    </script>
+</body>
+</html>

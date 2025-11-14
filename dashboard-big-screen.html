@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据大屏 - 智能停车管理中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Noto Sans SC', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; background: linear-gradient(135deg, #0f172a, #1e293b); overflow: hidden; }
+        .big-number { font-size: 3.5rem; font-weight: 700; color: #60a5fa; text-shadow: 0 0 20px rgba(96, 165, 250, 0.5); }
+        .card { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(96, 165, 250, 0.3); backdrop-filter: blur(10px); }
+        .title { color: #60a5fa; text-shadow: 0 0 10px rgba(96, 165, 250, 0.3); font-size: 2.5rem; }
+        .pulse-dot { width: 12px; height: 12px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .chart-container { height: calc(100% - 60px); min-height: 250px; }
+        .grid-container { height: 100%; display: grid; grid-template-columns: 1fr 2fr 1fr; grid-template-rows: 80px 1fr 1fr; gap: 16px; padding: 16px; }
+        .header { border-bottom: 2px solid rgba(96, 165, 250, 0.5); grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+        .left-panel { grid-column: 1; grid-row: 2 / -1; display: flex; flex-direction: column; gap: 16px; }
+        .center-panel { grid-column: 2; grid-row: 2 / -1; display: flex; flex-direction: column; gap: 16px; }
+        .right-panel { grid-column: 3; grid-row: 2 / -1; display: flex; flex-direction: column; gap: 16px; }
+        .panel-card { flex: 1; min-height: 200px; display: flex; flex-direction: column; }
+        .panel-title { font-size: 1.25rem; font-weight: 600; color: #60a5fa; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(96, 165, 250, 0.3); }
+        .metric-number { font-size: 2.5rem; font-weight: 700; text-align: center; margin: auto 0; }
+        .status-indicator { display: inline-flex; align-items: center; gap: 8px; }
+        @media (max-width: 1200px) { .grid-container { grid-template-columns: 1fr; grid-template-rows: auto; } .left-panel, .center-panel, .right-panel { grid-column: 1; } }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <!-- 网格容器 -->
+    <div class="grid-container">
+        <!-- 头部 -->
+        <header class="header bg-slate-900/90">
+            <div class="flex items-center space-x-4">
+                <div class="text-3xl">🅿️</div>
+                <h1 class="title">智能停车管理 数据大屏</h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div class="status-indicator">
+                    <div class="pulse-dot"></div>
+                    <span class="text-base">系统运行中</span>
+                </div>
+                <div class="text-xl font-light" id="current-time"></div>
+            </div>
+        </header>
+
+        <!-- 左侧栏 -->
+        <div class="left-panel">
+            <!-- 核心指标 -->
+            <div class="card panel-card rounded-xl p-4">
+                <h3 class="panel-title">核心运行指标</h3>
+                <div class="flex-1 flex flex-col justify-center">
+                    <div class="text-center">
+                        <div class="metric-number" id="total-parking-lots">169</div>
+                        <div class="text-sm text-gray-400 mt-1">在线停车场</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <div class="text-center p-2 bg-slate-800/50 rounded">
+                            <div class="text-xl font-bold text-green-400" id="total-spots">3,156</div>
+                            <div class="text-xs text-gray-400">总车位</div>
+                        </div>
+                        <div class="text-center p-2 bg-slate-800/50 rounded">
+                            <div class="text-xl font-bold text-yellow-400" id="available-spots">2,847</div>
+                            <div class="text-xs text-gray-400">空闲</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 今日收入 -->
+            <div class="card panel-card rounded-xl p-4">
+                <h3 class="panel-title">今日收入</h3>
+                <div class="flex-1 flex flex-col justify-center">
+                    <div class="text-center">
+                        <div class="metric-number text-green-400" id="daily-revenue">¥67,892</div>
+                        <div class="text-sm text-gray-400 mt-1">较昨日 +12.5%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 设备状态 -->
+            <div class="card panel-card rounded-xl p-4">
+                <h3 class="panel-title">设备状态</h3>
+                <div class="flex-1 flex flex-col justify-center">
+                    <div class="grid grid-cols-2 gap-3 text-center">
+                        <div class="p-3 bg-green-900/30 rounded">
+                            <div class="text-xl font-bold text-green-400" id="online-devices">347</div>
+                            <div class="text-xs text-gray-400">在线</div>
+                        </div>
+                        <div class="p-3 bg-red-900/30 rounded">
+                            <div class="text-xl font-bold text-red-400" id="offline-devices">12</div>
+                            <div class="text-xs text-gray-400">离线</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 中间栏 -->
+        <div class="center-panel">
+            <!-- 热力图 -->
+            <div class="card panel-card rounded-xl p-4">
+                <h3 class="panel-title">停车场实时热力图</h3>
+                <div class="flex-1">
+                    <div class="chart-container" id="heatmap-chart"></div>
+                </div>
+            </div>
+
+            <!-- 流量趋势 -->
+            <div class="card panel-card rounded-xl p-4">
+                <h3 class="panel-title">24小时车流趋势</h3>
+                <div class="flex-1">
+                    <div class="chart-container" id="traffic-flow-chart"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧栏 -->
+        <div class="right-panel">
+            <!-- 车位分布 -->
+            <div class="card panel-card rounded-xl p-4">
+                <h3 class="panel-title">车位使用分布</h3>
+                <div class="flex-1">
+                    <div class="chart-container" id="usage-pie-chart"></div>
+                </div>
+            </div>
+
+            <!-- 热门停车场 -->
+            <div class="card panel-card rounded-xl p-4">
+                <h3 class="panel-title">今日热门停车场</h3>
+                <div class="flex-1 overflow-y-auto space-y-2" id="top-parking-lots">
+                    <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded text-sm">
+                        <div>
+                            <div class="font-medium">机电学馆停车场</div>
+                            <div class="text-xs text-gray-400">利用率 92%</div>
+                        </div>
+                        <div class="text-green-400 font-bold">¥8,234</div>
+                    </div>
+                    <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded text-sm">
+                        <div>
+                            <div class="font-medium">建筑学馆停车场</div>
+                            <div class="text-xs text-gray-400">利用率 87%</div>
+                        </div>
+                        <div class="text-green-400 font-bold">¥7,156</div>
+                    </div>
+                    <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded text-sm">
+                        <div>
+                            <div class="font-medium">大成停车场</div>
+                            <div class="text-xs text-gray-400">利用率 78%</div>
+                        </div>
+                        <div class="text-green-400 font-bold">¥6,892</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 实时告警 -->
+            <div class="card panel-card rounded-xl p-4">
+                <h3 class="panel-title">实时告警</h3>
+                <div class="flex-1 overflow-y-auto space-y-2" id="alerts-list">
+                    <div class="flex items-start space-x-2 p-2 bg-orange-900/50 rounded text-xs">
+                        <div class="text-orange-400">⚠️</div>
+                        <div class="flex-1">
+                            <div>停车场A-101道闸异常</div>
+                            <div class="text-gray-400">2分钟前</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-2 p-2 bg-yellow-900/50 rounded text-xs">
+                        <div class="text-yellow-400">🔄</div>
+                        <div class="flex-1">
+                            <div>设备D-305传感器离线</div>
+                            <div class="text-gray-400">5分钟前</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+            <!-- 左侧 -->
+            <div class="col-span-3 space-y-6">
+                <!-- 核心指标 -->
+                <div class="card rounded-xl p-6">
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4">核心运行指标</h3>
+                    <div class="space-y-4">
+                        <div class="text-center">
+                            <div class="big-number" id="total-parking-lots">169</div>
+                            <div class="text-gray-400">在线停车场</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-6">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-green-400" id="total-spots">3,156</div>
+                                <div class="text-sm text-gray-400">总车位</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-yellow-400" id="available-spots">2,847</div>
+                                <div class="text-sm text-gray-400">空闲车位</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 今日收入 -->
+                <div class="card rounded-xl p-6">
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4">今日收入</h3>
+                    <div class="text-center">
+                        <div class="text-5xl font-bold text-green-400" id="daily-revenue">¥67,892</div>
+                        <div class="text-gray-400 mt-2">较昨日 +12.5%</div>
+                    </div>
+                </div>
+
+                <!-- 实时通知 -->
+                <div class="card rounded-xl p-6">
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4">实时告警</h3>
+                    <div class="space-y-3 max-h-48 overflow-y-auto" id="alerts-list">
+                        <div class="flex items-start space-x-3 p-2 bg-orange-900/50 rounded">
+                            <div class="text-orange-400">⚠️</div>
+                            <div class="flex-1">
+                                <div class="text-sm">停车场A-101道闸异常</div>
+                                <div class="text-xs text-gray-400">2分钟前</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3 p-2 bg-yellow-900/50 rounded">
+                            <div class="text-yellow-400">🔄</div>
+                            <div class="flex-1">
+                                <div class="text-sm">设备D-305传感器离线</div>
+                                <div class="text-xs text-gray-400">5分钟前</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中间 -->
+            <div class="col-span-6 space-y-6">
+                <!-- 热力图 -->
+                <div class="card rounded-xl p-6">
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4">停车场实时热力图</h3>
+                    <div class="chart-container" id="heatmap-chart"></div>
+                </div>
+
+                <!-- 流量趋势 -->
+                <div class="card rounded-xl p-6">
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4">24小时车流趋势</h3>
+                    <div class="chart-container" id="traffic-flow-chart"></div>
+                </div>
+            </div>
+
+            <!-- 右侧 -->
+            <div class="col-span-3 space-y-6">
+                <!-- 使用分布 -->
+                <div class="card rounded-xl p-6">
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4">车位使用分布</h3>
+                    <div class="chart-container" id="usage-pie-chart"></div>
+                </div>
+
+                <!-- Top停车场 -->
+                <div class="card rounded-xl p-6">
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4">今日热门停车场</h3>
+                    <div class="space-y-3" id="top-parking-lots">
+                        <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded">
+                            <div>
+                                <div class="font-medium">机电学馆停车场</div>
+                                <div class="text-sm text-gray-400">利用率 92%</div>
+                            </div>
+                            <div class="text-green-400 font-bold">¥8,234</div>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded">
+                            <div>
+                                <div class="font-medium">建筑学馆停车场</div>
+                                <div class="text-sm text-gray-400">利用率 87%</div>
+                            </div>
+                            <div class="text-green-400 font-bold">¥7,156</div>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded">
+                            <div>
+                                <div class="font-medium">大成停车场</div>
+                                <div class="text-sm text-gray-400">利用率 78%</div>
+                            </div>
+                            <div class="text-green-400 font-bold">¥6,892</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 设备状态 -->
+                <div class="card rounded-xl p-6">
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4">设备状态</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-3 bg-green-900/30 rounded">
+                            <div class="text-3xl text-green-400" id="online-devices">347</div>
+                            <div class="text-sm text-gray-400">在线设备</div>
+                        </div>
+                        <div class="text-center p-3 bg-red-900/30 rounded">
+                            <div class="text-3xl text-red-400" id="offline-devices">12</div>
+                            <div class="text-sm text-gray-400">离线设备</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="mockData.js"></script>
+    <script>
+        // 更新当前时间
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('current-time').textContent = timeString;
+        }
+
+        // 模拟实时数据更新
+        function updateRealTimeData() {
+            const parkingLots = document.getElementById('total-parking-lots');
+            parkingLots.textContent = 165 + Math.floor(Math.random() * 10);
+
+            const availableSpots = document.getElementById('available-spots');
+            availableSpots.textContent = (2800 + Math.floor(Math.random() * 100)).toLocaleString();
+
+            const revenue = document.getElementById('daily-revenue');
+            const newRevenue = 65000 + Math.floor(Math.random() * 8000);
+            revenue.textContent = `¥${newRevenue.toLocaleString()}`;
+        }
+
+        // 初始化热力图
+        function initializeHeatmapChart() {
+            const chart = echarts.init(document.getElementById('heatmap-chart'));
+
+            const data = [];
+            for (let i = 0; i < 24; i++) {
+                for (let j = 0; j < 7; j++) {
+                    data.push([i, j, Math.floor(Math.random() * 100)]);
+                }
+            }
+
+            const option = {
+                tooltip: {
+                    position: 'top',
+                    formatter: function(params) {
+                        return `小时: ${params.data[0]}<br/>星期: ${params.data[1] + 1}<br/>车流: ${params.data[2]}`;
+                    }
+                },
+                grid: { height: '80%', top: '10%' },
+                xAxis: {
+                    type: 'category',
+                    data: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    splitArea: { show: true }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    splitArea: { show: true }
+                },
+                visualMap: {
+                    min: 0,
+                    max: 100,
+                    calculable: true,
+                    orient: 'horizontal',
+                    left: 'center',
+                    bottom: '5%',
+                    inRange: {
+                        color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
+                    }
+                },
+                series: [{
+                    name: '车流热力',
+                    type: 'heatmap',
+                    data: data,
+                    label: { show: false },
+                    emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                }]
+            };
+
+            chart.setOption(option);
+        }
+
+        // 初始化流量趋势图
+        function initializeTrafficFlowChart() {
+            const chart = echarts.init(document.getElementById('traffic-flow-chart'));
+
+            const hours = Array.from({length: 24}, (_, i) => `${i}:00`);
+            const trafficData = hours.map(() => 50 + Math.floor(Math.random() * 150));
+
+            const option = {
+                tooltip: { trigger: 'axis' },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', boundaryGap: false, data: hours },
+                yAxis: { type: 'value', axisLabel: { formatter: '{value} 辆' } },
+                series: [{
+                    name: '车流量',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',
+                    lineStyle: { color: '#60a5fa', width: 3 },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(96, 165, 250, 0.3)' },
+                            { offset: 1, color: 'rgba(96, 165, 250, 0.05)' }
+                        ])
+                    },
+                    data: trafficData
+                }]
+            };
+
+            chart.setOption(option);
+        }
+
+        // 初始化饼图
+        function initializePieChart() {
+            const chart = echarts.init(document.getElementById('usage-pie-chart'));
+
+            const option = {
+                tooltip: { trigger: 'item' },
+                series: [{
+                    name: '车位使用',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: { borderRadius: 10, borderColor: '#1e293b', borderWidth: 2 },
+                    label: { show: false, position: 'center' },
+                    emphasis: {
+                        label: { show: true, fontSize: 20, fontWeight: 'bold' }
+                    },
+                    labelLine: { show: false },
+                    data: [
+                        { value: 2847, name: '空闲车位', itemStyle: { color: '#10b981' } },
+                        { value: 309, name: '已占用车位', itemStyle: { color: '#ef4444' } }
+                    ]
+                }]
+            };
+
+            chart.setOption(option);
+        }
+
+        // 添加告警
+        function addAlert(message, type = 'warning') {
+            const alertsContainer = document.getElementById('alerts-list');
+            const icon = type === 'warning' ? '⚠️' : '🔄';
+            const bgColor = type === 'warning' ? 'bg-orange-900/50' : 'bg-yellow-900/50';
+            const textColor = type === 'warning' ? 'text-orange-400' : 'text-yellow-400';
+
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `flex items-start space-x-3 p-2 ${bgColor} rounded`;
+            alertDiv.innerHTML = `
+                <div class="${textColor}">${icon}</div>
+                <div class="flex-1">
+                    <div class="text-sm">${message}</div>
+                    <div class="text-xs text-gray-400">刚刚</div>
+                </div>
+            `;
+
+            alertsContainer.insertBefore(alertDiv, alertsContainer.firstChild);
+
+            // 限制告警数量
+            while (alertsContainer.children.length > 10) {
+                alertsContainer.removeChild(alertsContainer.lastChild);
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+
+            initializeHeatmapChart();
+            initializeTrafficFlowChart();
+            initializePieChart();
+
+            updateRealTimeData();
+            setInterval(updateRealTimeData, 5000);
+
+            // 每30秒添加随机告警
+            setInterval(() => {
+                const messages = [
+                    '停车场C区车位占用率超过90%',
+                    '设备D-403温度异常，当前45°C',
+                    '停车场B区网络延迟较高',
+                    '发现可疑车辆停留超过24小时',
+                    '系统负载达到75%'
+                ];
+                addAlert(messages[Math.floor(Math.random() * messages.length)]);
+            }, 30000);
+
+            // 响应式
+            window.addEventListener('resize', () => {
+                echarts.getInstanceByDom(document.getElementById('heatmap-chart'))?.resize();
+                echarts.getInstanceByDom(document.getElementById('traffic-flow-chart'))?.resize();
+                echarts.getInstanceByDom(document.getElementById('usage-pie-chart'))?.resize();
+            });
+        });
+    </script>
+</body>
+</html>
