@@ -11,6 +11,9 @@ Thumbs.db
 *.swo
 *~
 
+# Claude Code配置
+.claude/
+
 # Node.js/NPM
 node_modules/
 npm-debug.log*
