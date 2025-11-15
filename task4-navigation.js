@@ -2,6 +2,9 @@
 // 4. 智能导航与反向寻车系统
 // ==========================================
 
+// 全局变量：存储用户选择的目标位置
+let selectedTargetLocation = null;
+
 /**
  * 室内导航路径规划（核心功能）
  * 简化版A*算法，支持跨楼层导航
@@ -430,8 +433,8 @@ function initializeNavigation() {
     canvas.width = 800;
     canvas.height = 500;
 
-    // 绘制初始地图
-    drawParkingMap(ctx, 1, { x: 50, y: 50 }, { x: 400, y: 300, spotNumber: 'B23' });
+    // 绘制初始地图（初始时没有目标位置，只显示当前位置）
+    drawParkingMap(ctx, 1, { x: 50, y: 50 }, selectedTargetLocation);
 
     // 绑定楼层切换
     document.querySelectorAll('.floor-tab').forEach(tab => {
@@ -439,7 +442,7 @@ function initializeNavigation() {
             const floor = parseInt(this.getAttribute('data-floor'));
             document.querySelectorAll('.floor-tab').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
-            drawParkingMap(ctx, floor, { x: 50, y: 50 }, { x: 400, y: 300, spotNumber: 'B23' });
+            drawParkingMap(ctx, floor, { x: 50, y: 50 }, selectedTargetLocation);
         });
     });
 

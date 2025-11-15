@@ -805,9 +805,11 @@
                 activeTab.classList.add('active', 'bg-blue-600', 'text-white');
             }
 
-            // 重新绘制地图
+            // 重新绘制地图（使用全局目标位置，如果目标位置不在当前楼层则显示为null）
             const currentLocation = floor === 1 ? { x: 50, y: 50 } : null;
-            const targetLocation = floor === 3 ? { x: 400, y: 300, spotNumber: 'B23' } : null;
+            const targetLocation = selectedTargetLocation && selectedTargetLocation.floor === floor
+                ? selectedTargetLocation
+                : null;
 
             if (typeof drawParkingMap === 'function') {
                 drawParkingMap(ctx, floor, currentLocation, targetLocation);
@@ -842,6 +844,14 @@
                 alert('请输入车位编号');
                 return;
             }
+
+            // 设置全局目标位置，用于地图显示和楼层切换
+            selectedTargetLocation = {
+                floor: floor,
+                x: 400,
+                y: 300,
+                spotNumber: spotNumber
+            };
 
             // 生成基于车位号的动态路径
             const navigationResult = generateDynamicNavigation(floor, spotNumber);
