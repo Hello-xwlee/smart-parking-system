@@ -56,15 +56,51 @@
                 <div class="flex items-center space-x-4">
                     <a href="index.html" class="text-gray-600 hover:text-blue-600 transition-colors">首页</a>
                     <a href="search.html" class="text-blue-600 font-medium hover:text-blue-800 transition-colors">停车场查询</a>
+                    <a href="navigation.html" class="text-gray-600 hover:text-blue-600 transition-colors">室内导航</a>
                     <a href="booking.html" class="text-gray-600 hover:text-blue-600 transition-colors">预约管理</a>
                     <a href="payment.html" class="text-gray-600 hover:text-blue-600 transition-colors">缴费中心</a>
-                    <button onclick="showAdminLogin()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        管理员登录
+                    <a href="dashboard-big-screen.html" class="text-gray-600 hover:text-yellow-400 transition-colors" target="_blank">数据大屏</a>
+
+                    <!-- 通知铃铛 -->
+                    <button onclick="NotificationManager.showNotificationDrawer()" class="relative p-2 text-gray-600 hover:text-blue-600 transition-colors" id="notification-btn" style="display: none;">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold hidden" id="notification-badge">0</span>
                     </button>
+
+                    <!-- 登录前显示 -->
+                    <a href="login.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" id="nav-login-btn">登录</a>
+                    <a href="register.html" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors" id="nav-register-btn">注册</a>
+
+                    <!-- 登录后显示 -->
+                    <button onclick="AuthManager.logout()" class="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors hidden" id="nav-logout-btn">退出</button>
                 </div>
             </div>
         </div>
     </nav>
+
+    <!-- 通知抽屉 -->
+    <div id="drawer-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="NotificationManager.hideNotificationDrawer()"></div>
+    <div id="notification-drawer" class="fixed top-0 right-0 h-full w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out">
+        <div class="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">消息通知</h2>
+            <button onclick="NotificationManager.hideNotificationDrawer()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="flex items-center justify-between p-4 border-b border-gray-100">
+            <button onclick="NotificationManager.markAllAsRead()" class="text-sm text-blue-600 hover:text-blue-800">
+                全部标记为已读
+            </button>
+        </div>
+        <div id="notification-list" class="flex-1 overflow-y-auto" style="max-height: calc(100vh - 140px);">
+            <!-- 通知列表 -->
+        </div>
+    </div>
 
     <!-- 主要内容 -->
     <main class="pt-16">
@@ -181,7 +217,7 @@
     <!-- 页脚 -->
     <footer class="bg-gray-800 text-white py-12">
         <div class="container mx-auto px-6 text-center">
-            <p class="text-gray-300">&copy; 2024 智能停车管理系统. 基于人工智能和物联网技术的现代化停车解决方案.</p>
+            <p class="text-gray-300">&copy; 2025 智能停车管理系统. 基于人工智能和物联网技术的现代化停车解决方案.</p>
         </div>
     </footer>
 
@@ -230,35 +266,71 @@
             initializeFilterButtons();
         });
 
-        // 初始化地图
+        // 初始化地图（带示例图片占位符）
         function initializeMap() {
-            map = L.map('map').setView([39.9042, 116.4074], 13);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
+            const mapContainer = document.getElementById('map');
 
-            // 添加一些示例停车场标记
-            const parkingLocations = [
-                { lat: 39.9042, lng: 116.4074, name: '中关村停车场', status: 'available' },
-                { lat: 39.9100, lng: 116.4200, name: '王府井停车场', status: 'busy' },
-                { lat: 39.8900, lng: 116.3900, name: '西单停车场', status: 'available' },
-                { lat: 39.9200, lng: 116.4300, name: '东单停车场', status: 'full' }
-            ];
+            try {
+                // 尝试初始化Leaflet地图
+                if (typeof L !== 'undefined') {
+                    map = L.map('map').setView([39.9042, 116.4074], 13);
 
-            parkingLocations.forEach(parking => {
-                const color = parking.status === 'available' ? 'green' : 
-                             parking.status === 'busy' ? 'orange' : 'red';
-                
-                L.marker([parking.lat, parking.lng])
-                    .addTo(map)
-                    .bindPopup(`<b>${parking.name}</b><br>状态: ${parking.status}`)
-                    .setIcon(L.divIcon({
-                        className: `custom-marker ${color}`,
-                        html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
-                        iconSize: [20, 20]
-                    }));
-            });
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+
+                    // 添加一些示例停车场标记
+                    const parkingLocations = [
+                        { lat: 39.9042, lng: 116.4074, name: '中关村停车场', status: 'available' },
+                        { lat: 39.9100, lng: 116.4200, name: '王府井停车场', status: 'busy' },
+                        { lat: 39.8900, lng: 116.3900, name: '西单停车场', status: 'available' },
+                        { lat: 39.9200, lng: 116.4300, name: '东单停车场', status: 'full' }
+                    ];
+
+                    parkingLocations.forEach(parking => {
+                        const color = parking.status === 'available' ? 'green' :
+                                     parking.status === 'busy' ? 'orange' : 'red';
+
+                        L.marker([parking.lat, parking.lng])
+                            .addTo(map)
+                            .bindPopup(`<b>${parking.name}</b><br>状态: ${parking.status}`)
+                            .setIcon(L.divIcon({
+                                className: `custom-marker ${color}`,
+                                html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+                                iconSize: [20, 20]
+                            }));
+                    });
+                } else {
+                    // Leaflet库未加载，显示示例图片
+                    throw new Error('Leaflet library not loaded');
+                }
+            } catch (error) {
+                // 显示示例地图图片
+                console.log('Leaflet地图初始化失败，显示示例图片:', error);
+                mapContainer.innerHTML = `
+                    <div class="flex items-center justify-center h-full bg-gray-100 rounded-lg relative overflow-hidden">
+                        <img src="https://picsum.photos/seed/parking-map/800/500.jpg" alt="停车场地图示例" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                            <div class="text-white text-center">
+                                <div class="text-4xl mb-2">🗺️</div>
+                                <div class="text-lg font-semibold">地图加载中...</div>
+                                <div class="text-sm opacity-80">示例停车场分布图</div>
+                                <div class="mt-4 text-xs opacity-60">
+                                    提示：连接到互联网以加载实时地图
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3">
+                        <div class="text-sm font-semibold mb-2">停车场状态</div>
+                        <div class="space-y-1 text-xs">
+                            <div class="flex items-center"><div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>空闲: 4个</div>
+                            <div class="flex items-center"><div class="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>紧张: 2个</div>
+                            <div class="flex items-center"><div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>已满: 1个</div>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         // 生成停车场数据
@@ -274,10 +346,10 @@
             parkingData = names.map((name, index) => {
                 const status = statuses[Math.floor(Math.random() * statuses.length)];
                 const totalSpots = Math.floor(Math.random() * 200) + 50;
-                const availableSpots = status === 'full' ? 0 : 
+                const availableSpots = status === 'full' ? 0 :
                                      status === 'busy' ? Math.floor(totalSpots * 0.2) :
                                      Math.floor(totalSpots * 0.6);
-                
+
                 return {
                     id: index + 1,
                     name: name,
@@ -293,23 +365,10 @@
             });
         }
 
-        // 显示停车场列表
-        function displayParkingLots() {
-            const container = document.getElementById('parking-list');
-            if (!container) return;
-
-            container.innerHTML = '';
-
-            parkingData.forEach(parking => {
-                const parkingElement = createParkingElement(parking);
-                container.appendChild(parkingElement);
-            });
-        }
-
-        // 创建停车场元素
-        function createParkingElement(parking) {
+        // 创建列表视图元素（紧凑型）
+        function createListParkingElement(parking) {
             const div = document.createElement('div');
-            div.className = 'parking-card bg-gray-50 rounded-lg p-4 cursor-pointer';
+            div.className = 'parking-card bg-gray-50 rounded-lg p-4 cursor-pointer border border-gray-200';
             div.setAttribute('data-lot-id', `P${String(parking.id).padStart(3, '0')}`);
             div.onclick = () => showParkingDetail(parking);
 
@@ -320,30 +379,99 @@
 
             div.innerHTML = `
                 <div class="flex justify-between items-start mb-3">
-                    <h3 class="font-semibold text-lg">${parking.name}</h3>
-                    <span class="${statusClass} font-medium">${statusText}</span>
+                    <h3 class="font-semibold text-lg flex-1">${parking.name}</h3>
+                    <span class="${statusClass} font-medium text-sm ml-2">${statusText}</span>
                 </div>
                 <div class="text-sm text-gray-600 mb-2">${parking.address}</div>
-                <div class="flex justify-between items-center text-sm">
+                <div class="flex justify-between items-center text-sm mb-3">
+                    <span class="flex items-center">
+                        <span class="text-yellow-500 mr-1">⭐</span>
+                        ${parking.rating}
+                    </span>
+                    <span>📍 ${parking.distance}km</span>
                     <span class="dynamic-price">
                         <strong>💰 ${parking.price}元/小时</strong>
                     </span>
-                    <span>📍 ${parking.distance}km</span>
-                    <span>🅿️ ${parking.availableSpots}/${parking.totalSpots}</span>
                 </div>
-                <div class="mt-3 flex justify-between items-center">
-                    <div class="flex items-center">
-                        <span class="text-yellow-500">⭐</span>
-                        <span class="ml-1 text-sm">${parking.rating}</span>
-                    </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm">🅿️ ${parking.availableSpots}/${parking.totalSpots} 可用</span>
                     <button onclick="event.stopPropagation(); bookParkingSpot(${parking.id})"
-                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        立即预约
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                        预约
                     </button>
                 </div>
             `;
 
             return div;
+        }
+
+        // 创建卡片视图元素（含图片，更详细）
+        function createCardParkingElement(parking) {
+            const div = document.createElement('div');
+            div.className = 'parking-card bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer transform hover:scale-105 transition-all border border-gray-200';
+            div.setAttribute('data-lot-id', `P${String(parking.id).padStart(3, '0')}`);
+            div.onclick = () => showParkingDetail(parking);
+
+            const statusClass = parking.status === 'available' ? 'status-available' :
+                               parking.status === 'busy' ? 'status-busy' : 'status-full';
+            const statusText = parking.status === 'available' ? '空闲' :
+                              parking.status === 'busy' ? '紧张' : '已满';
+
+            div.innerHTML = `
+                <img src="${parking.image}" alt="${parking.name}" class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-semibold text-lg flex-1">${parking.name}</h3>
+                        <span class="${statusClass} font-medium text-sm ml-2">${statusText}</span>
+                    </div>
+                    <div class="text-sm text-gray-600 mb-3">${parking.address}</div>
+                    <div class="flex justify-between items-center text-sm mb-4">
+                        <span class="flex items-center">
+                            <span class="text-yellow-500 mr-1">⭐</span>
+                            ${parking.rating}
+                        </span>
+                        <span>📍 ${parking.distance}km</span>
+                        <span class="dynamic-price font-bold">
+                            💰 ${parking.price}元/小时
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="text-sm">
+                            <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2">
+                                🅿️ ${parking.availableSpots}/${parking.totalSpots}
+                            </span>
+                        </div>
+                        <button onclick="event.stopPropagation(); bookParkingSpot(${parking.id})"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            立即预约
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // 显示停车场列表（支持列表和卡片视图）
+        function displayParkingLots() {
+            const container = document.getElementById('parking-list');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            // 根据不同视图设置不同的容器样式
+            if (currentView === 'list') {
+                container.className = 'space-y-4 max-h-96 overflow-y-auto';
+            } else {
+                container.className = 'grid grid-cols-1 md:grid-cols-2 gap-6 max-h-96 overflow-y-auto';
+            }
+
+            parkingData.forEach(parking => {
+                const parkingElement = currentView === 'list'
+                    ? createListParkingElement(parking)
+                    : createCardParkingElement(parking);
+                container.appendChild(parkingElement);
+            });
         }
 
         // 计算停车场推荐指数（基于多维特征评分模型）

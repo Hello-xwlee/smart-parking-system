@@ -1046,16 +1046,259 @@ function handleAdminLogin() {
     }, 1000);
 }
 
-// 显示用户注册
+// 显示用户注册模态框
 function showUserRegister() {
-    alert('用户注册功能开发中，敬请期待！');
+    const modal = document.getElementById('register-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        anime({
+            targets: modal.querySelector('.bg-white'),
+            scale: [0.8, 1],
+            opacity: [0, 1],
+            duration: 300,
+            easing: 'easeOutQuad'
+        });
+        // 清空之前的表单数据
+        clearRegisterForm();
+    }
+}
+
+// 关闭用户注册模态框
+function closeUserRegister() {
+    const modal = document.getElementById('register-modal');
+    if (modal) {
+        anime({
+            targets: modal.querySelector('.bg-white'),
+            scale: [1, 0.8],
+            opacity: [1, 0],
+            duration: 200,
+            easing: 'easeInQuad',
+            complete: function() {
+                modal.classList.add('hidden');
+                // 清空表单数据
+                clearRegisterForm();
+            }
+        });
+    }
+}
+
+// 清空注册表单
+function clearRegisterForm() {
+    const form = document.getElementById('user-register-form');
+    if (form) {
+        form.reset();
+    }
+    // 清空错误信息
+    document.getElementById('username-error').textContent = '';
+    document.getElementById('username-error').classList.add('hidden');
+    document.getElementById('phone-error').textContent = '';
+    document.getElementById('phone-error').classList.add('hidden');
+    document.getElementById('email-error').textContent = '';
+    document.getElementById('email-error').classList.add('hidden');
+    document.getElementById('password-error').textContent = '';
+    document.getElementById('password-error').classList.add('hidden');
+    document.getElementById('confirm-password-error').textContent = '';
+    document.getElementById('confirm-password-error').classList.add('hidden');
+}
+
+// 验证用户名
+function validateUsername(username) {
+    const errorDiv = document.getElementById('username-error');
+
+    if (!username || username.trim().length < 3) {
+        errorDiv.textContent = '用户名至少需要3个字符';
+        errorDiv.classList.remove('hidden');
+        return false;
+    }
+    if (username.length > 20) {
+        errorDiv.textContent = '用户名不能超过20个字符';
+        errorDiv.classList.remove('hidden');
+        return false;
+    }
+    // 检查用户名是否已存在
+    const users = JSON.parse(localStorage.getItem('smartparking_users') || '[]');
+    if (users.find(u => u.username === username)) {
+        errorDiv.textContent = '用户名已存在，请使用其他用户名';
+        errorDiv.classList.remove('hidden');
+        return false;
+    }
+
+    errorDiv.classList.add('hidden');
+    return true;
+}
+
+// 验证手机号
+function validatePhone(phone) {
+    const errorDiv = document.getElementById('phone-error');
+    const phoneRegex = /^1[3-9]\d{9}$/;
+
+    if (!phone) {
+        errorDiv.textContent = '手机号不能为空';
+        errorDiv.classList.remove('hidden');
+        return false;
+    }
+    if (!phoneRegex.test(phone)) {
+        errorDiv.textContent = '请输入正确的手机号格式';
+        errorDiv.classList.remove('hidden');
+        return false;
+    }
+    // 检查手机号是否已存在
+    const users = JSON.parse(localStorage.getItem('smartparking_users') || '[]');
+    if (users.find(u => u.phone === phone)) {
+        errorDiv.textContent = '手机号已被注册';
+        errorDiv.classList.remove('hidden');
+        return false;
+    }
+
+    errorDiv.classList.add('hidden');
+    return true;
+}
+
+// 验证邮箱
+function validateEmail(email) {
+    const errorDiv = document.getElementById('email-error');
+
+    if (!email || email.trim() === '') {
+        errorDiv.classList.add('hidden');
+        return true; // 邮箱是可选的
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        errorDiv.textContent = '请输入正确的邮箱格式';
+        errorDiv.classList.remove('hidden');
+        return false;
+    }
+
+    errorDiv.classList.add('hidden');
+    return true;
+}
+
+// 验证密码
+function validatePassword(password, confirmPassword = null) {
+    const errorDiv = document.getElementById('password-error');
+
+    if (!password || password.length < 6) {
+        errorDiv.textContent = '密码至少需要6位字符';
+        errorDiv.classList.remove('hidden');
+        return false;
+    }
+
+    errorDiv.classList.add('hidden');
+
+    // 验证确认密码
+    if (confirmPassword !== null) {
+        return validateConfirmPassword(password, confirmPassword);
+    }
+
+    return true;
+}
+
+// 验证确认密码
+function validateConfirmPassword(password, confirmPassword) {
+    const errorDiv = document.getElementById('confirm-password-error');
+
+    if (!confirmPassword) {
+        errorDiv.textContent = '请确认密码';
+        errorDiv.classList.remove('hidden');
+        return false;
+    }
+    if (password !== confirmPassword) {
+        errorDiv.textContent = '两次输入的密码不一致';
+        errorDiv.classList.remove('hidden');
+        return false;
+    }
+
+    errorDiv.classList.add('hidden');
+    return true;
+}
+
+// 用户注册功能
+function handleUserRegister(event) {
+    event.preventDefault();
+
+    const username = document.getElementById('reg-username').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const confirmPassword = document.getElementById('reg-confirm-password').value;
+
+    // 验证所有字段
+    const isUsernameValid = validateUsername(username);
+    const isPhoneValid = validatePhone(phone);
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password);
+    const isConfirmPasswordValid = validateConfirmPassword(password, confirmPassword);
+
+    if (!document.getElementById('reg-terms').checked) {
+        alert('请先同意服务条款和隐私政策');
+        return false;
+    }
+
+    if (isUsernameValid && isPhoneValid && isEmailValid && isPasswordValid && isConfirmPasswordValid) {
+        // 注册成功，保存用户信息
+        const users = JSON.parse(localStorage.getItem('smartparking_users') || '[]');
+        const newUser = {
+            id: Date.now(), // 使用时间戳作为用户ID
+            username: username,
+            phone: phone,
+            email: email || null,
+            password: btoa(password), // 简单加密存储密码（实际项目应使用更安全的加密方式）
+            registerTime: new Date().toLocaleString('zh-CN'),
+            status: 'active',
+            vehicleCount: 0
+        };
+
+        users.push(newUser);
+        localStorage.setItem('smartparking_users', JSON.stringify(users));
+
+        // 自动登录
+        const token = btoa(`${username}:${Date.now()}`);
+        localStorage.setItem('smartparking_token', token);
+        localStorage.setItem('smartparking_user', JSON.stringify({
+            userId: newUser.id,
+            username: newUser.username,
+            phone: newUser.phone,
+            email: newUser.email
+        }));
+
+        // 关闭注册模态框
+        closeUserRegister();
+
+        // 显示成功消息
+        alert(`注册成功！欢迎 ${username}！`);
+
+        // 更新导航栏显示
+        if (typeof AuthManager !== 'undefined') {
+            AuthManager.updateNavigation();
+        } else {
+            // 如果没有AuthManager，手动更新导航栏
+            updateNavigationBar();
+        }
+    }
+}
+
+// 更新导航栏（当没有AuthManager时）
+function updateNavigationBar() {
+    const loginBtn = document.getElementById('nav-login-btn');
+    const registerBtn = document.getElementById('nav-register-btn');
+    const logoutBtn = document.getElementById('nav-logout-btn');
+    const notificationBtn = document.getElementById('notification-btn');
+
+    if (localStorage.getItem('smartparking_token')) {
+        // 已登录状态
+        if (loginBtn) loginBtn.classList.add('hidden');
+        if (registerBtn) registerBtn.classList.add('hidden');
+        if (logoutBtn) logoutBtn.classList.remove('hidden');
+        if (notificationBtn) notificationBtn.style.display = 'block';
+    }
 }
 
 // 停车场搜索功能
 function searchParkingLots() {
     const searchInput = document.getElementById('search-input');
     const location = searchInput ? searchInput.value : '';
-    
+
     if (location.trim()) {
         // 模拟搜索功能
         console.log('搜索停车场位置:', location);
@@ -1082,10 +1325,64 @@ window.addEventListener('error', function(e) {
     console.error('JavaScript错误:', e.error);
 });
 
+// 注册表单提交事件监听（针对index.html）
+document.addEventListener('DOMContentLoaded', function() {
+    const registerForm = document.getElementById('user-register-form');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleUserRegister);
+    }
+
+    // 添加实时验证功能
+    const usernameInput = document.getElementById('reg-username');
+    const phoneInput = document.getElementById('reg-phone');
+    const emailInput = document.getElementById('reg-email');
+    const passwordInput = document.getElementById('reg-password');
+    const confirmPasswordInput = document.getElementById('reg-confirm-password');
+
+    if (usernameInput) {
+        usernameInput.addEventListener('blur', function() {
+            validateUsername(this.value.trim());
+        });
+    }
+
+    if (phoneInput) {
+        phoneInput.addEventListener('blur', function() {
+            validatePhone(this.value.trim());
+        });
+    }
+
+    if (emailInput) {
+        emailInput.addEventListener('blur', function() {
+            validateEmail(this.value.trim());
+        });
+    }
+
+    if (passwordInput) {
+        passwordInput.addEventListener('blur', function() {
+            validatePassword(this.value);
+        });
+        passwordInput.addEventListener('input', function() {
+            if (confirmPasswordInput && confirmPasswordInput.value) {
+                validateConfirmPassword(this.value, confirmPasswordInput.value);
+            }
+        });
+    }
+
+    if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('blur', function() {
+            if (passwordInput) {
+                validateConfirmPassword(passwordInput.value, this.value);
+            }
+        });
+    }
+});
+
 // 导出主要函数供其他页面使用
 window.SmartParking = {
     showAdminLogin,
     closeAdminLogin,
+    showUserRegister,
+    closeUserRegister,
     searchParkingLots,
     bookParkingSpot,
     processPayment

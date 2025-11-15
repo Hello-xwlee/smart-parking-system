@@ -249,7 +249,7 @@
     <!-- 页脚 -->
     <footer class="bg-gray-800 text-white py-12">
         <div class="container mx-auto px-6 text-center">
-            <p class="text-gray-300">&copy; 2024 智能停车管理系统. 基于人工智能和物联网技术的现代化停车解决方案.</p>
+            <p class="text-gray-300">&copy; 2025 智能停车管理系统. 基于人工智能和物联网技术的现代化停车解决方案.</p>
         </div>
     </footer>
 
@@ -269,6 +269,64 @@
                 <div class="flex space-x-4">
                     <button type="button" onclick="closeAdminLogin()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">取消</button>
                     <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">登录</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 用户注册模态框 -->
+    <div id="register-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-center flex-1">用户注册</h3>
+                <button onclick="closeUserRegister()" class="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+            </div>
+            <form id="user-register-form">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">用户名</label>
+                    <input type="text" id="reg-username" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="请输入用户名（3-20个字符）" required>
+                    <div id="username-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">手机号</label>
+                    <input type="tel" id="reg-phone" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="请输入手机号" required>
+                    <div id="phone-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">邮箱（可选）</label>
+                    <input type="email" id="reg-email" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="请输入邮箱地址">
+                    <div id="email-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">密码</label>
+                    <input type="password" id="reg-password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="请输入密码（至少6位）" required>
+                    <div id="password-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">确认密码</label>
+                    <input type="password" id="reg-confirm-password" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="请再次输入密码" required>
+                    <div id="confirm-password-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="reg-terms" class="mr-2" required>
+                        <span class="text-sm text-gray-700">我已阅读并同意 <a href="#" class="text-blue-600 hover:underline">服务条款</a> 和 <a href="#" class="text-blue-600 hover:underline">隐私政策</a></span>
+                    </label>
+                </div>
+
+                <div class="flex space-x-4">
+                    <button type="button" onclick="closeUserRegister()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">取消</button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">注册</button>
+                </div>
+
+                <div class="text-center mt-4">
+                    <span class="text-sm text-gray-600">已有账号？</span>
+                    <a href="login.html" class="text-blue-600 hover:text-blue-800 font-medium">立即登录</a>
                 </div>
             </form>
         </div>

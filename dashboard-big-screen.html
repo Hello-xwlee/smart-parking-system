@@ -177,128 +177,6 @@
             </div>
         </div>
     </div>
-            <!-- 左侧 -->
-            <div class="col-span-3 space-y-6">
-                <!-- 核心指标 -->
-                <div class="card rounded-xl p-6">
-                    <h3 class="text-xl font-semibold text-blue-400 mb-4">核心运行指标</h3>
-                    <div class="space-y-4">
-                        <div class="text-center">
-                            <div class="big-number" id="total-parking-lots">169</div>
-                            <div class="text-gray-400">在线停车场</div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 mt-6">
-                            <div class="text-center">
-                                <div class="text-3xl font-bold text-green-400" id="total-spots">3,156</div>
-                                <div class="text-sm text-gray-400">总车位</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-3xl font-bold text-yellow-400" id="available-spots">2,847</div>
-                                <div class="text-sm text-gray-400">空闲车位</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 今日收入 -->
-                <div class="card rounded-xl p-6">
-                    <h3 class="text-xl font-semibold text-blue-400 mb-4">今日收入</h3>
-                    <div class="text-center">
-                        <div class="text-5xl font-bold text-green-400" id="daily-revenue">¥67,892</div>
-                        <div class="text-gray-400 mt-2">较昨日 +12.5%</div>
-                    </div>
-                </div>
-
-                <!-- 实时通知 -->
-                <div class="card rounded-xl p-6">
-                    <h3 class="text-xl font-semibold text-blue-400 mb-4">实时告警</h3>
-                    <div class="space-y-3 max-h-48 overflow-y-auto" id="alerts-list">
-                        <div class="flex items-start space-x-3 p-2 bg-orange-900/50 rounded">
-                            <div class="text-orange-400">⚠️</div>
-                            <div class="flex-1">
-                                <div class="text-sm">停车场A-101道闸异常</div>
-                                <div class="text-xs text-gray-400">2分钟前</div>
-                            </div>
-                        </div>
-                        <div class="flex items-start space-x-3 p-2 bg-yellow-900/50 rounded">
-                            <div class="text-yellow-400">🔄</div>
-                            <div class="flex-1">
-                                <div class="text-sm">设备D-305传感器离线</div>
-                                <div class="text-xs text-gray-400">5分钟前</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 中间 -->
-            <div class="col-span-6 space-y-6">
-                <!-- 热力图 -->
-                <div class="card rounded-xl p-6">
-                    <h3 class="text-xl font-semibold text-blue-400 mb-4">停车场实时热力图</h3>
-                    <div class="chart-container" id="heatmap-chart"></div>
-                </div>
-
-                <!-- 流量趋势 -->
-                <div class="card rounded-xl p-6">
-                    <h3 class="text-xl font-semibold text-blue-400 mb-4">24小时车流趋势</h3>
-                    <div class="chart-container" id="traffic-flow-chart"></div>
-                </div>
-            </div>
-
-            <!-- 右侧 -->
-            <div class="col-span-3 space-y-6">
-                <!-- 使用分布 -->
-                <div class="card rounded-xl p-6">
-                    <h3 class="text-xl font-semibold text-blue-400 mb-4">车位使用分布</h3>
-                    <div class="chart-container" id="usage-pie-chart"></div>
-                </div>
-
-                <!-- Top停车场 -->
-                <div class="card rounded-xl p-6">
-                    <h3 class="text-xl font-semibold text-blue-400 mb-4">今日热门停车场</h3>
-                    <div class="space-y-3" id="top-parking-lots">
-                        <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded">
-                            <div>
-                                <div class="font-medium">机电学馆停车场</div>
-                                <div class="text-sm text-gray-400">利用率 92%</div>
-                            </div>
-                            <div class="text-green-400 font-bold">¥8,234</div>
-                        </div>
-                        <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded">
-                            <div>
-                                <div class="font-medium">建筑学馆停车场</div>
-                                <div class="text-sm text-gray-400">利用率 87%</div>
-                            </div>
-                            <div class="text-green-400 font-bold">¥7,156</div>
-                        </div>
-                        <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded">
-                            <div>
-                                <div class="font-medium">大成停车场</div>
-                                <div class="text-sm text-gray-400">利用率 78%</div>
-                            </div>
-                            <div class="text-green-400 font-bold">¥6,892</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 设备状态 -->
-                <div class="card rounded-xl p-6">
-                    <h3 class="text-xl font-semibold text-blue-400 mb-4">设备状态</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="text-center p-3 bg-green-900/30 rounded">
-                            <div class="text-3xl text-green-400" id="online-devices">347</div>
-                            <div class="text-sm text-gray-400">在线设备</div>
-                        </div>
-                        <div class="text-center p-3 bg-red-900/30 rounded">
-                            <div class="text-3xl text-red-400" id="offline-devices">12</div>
-                            <div class="text-sm text-gray-400">离线设备</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
 
     <script src="mockData.js"></script>
     <script>
@@ -381,18 +259,69 @@
             chart.setOption(option);
         }
 
-        // 初始化流量趋势图
+        // 初始化流量趋势图（按时段生成合理的车流数据）
         function initializeTrafficFlowChart() {
             const chart = echarts.init(document.getElementById('traffic-flow-chart'));
 
             const hours = Array.from({length: 24}, (_, i) => `${i}:00`);
-            const trafficData = hours.map(() => 50 + Math.floor(Math.random() * 150));
+
+            // 按小时生成合理的车流数据
+            // 凌晨(0-6点): 10-30 (低峰期)
+            // 早高峰(7-9点): 80-200
+            // 上午(10-11点): 60-120
+            // 中午(12-13点): 70-150
+            // 下午(14-16点): 60-100
+            // 晚高峰(17-19点): 100-250
+            // 晚上(20-22点): 50-100
+            // 深夜(23点): 30-60
+            const trafficData = hours.map((_, hour) => {
+                if (hour >= 0 && hour < 6) {
+                    // 凌晨 - 低流量
+                    return 10 + Math.floor(Math.random() * 20);
+                } else if (hour >= 7 && hour <= 9) {
+                    // 早高峰
+                    return 80 + Math.floor(Math.random() * 120);
+                } else if (hour >= 10 && hour <= 11) {
+                    // 上午
+                    return 60 + Math.floor(Math.random() * 60);
+                } else if (hour >= 12 && hour <= 13) {
+                    // 中午
+                    return 70 + Math.floor(Math.random() * 80);
+                } else if (hour >= 14 && hour <= 16) {
+                    // 下午
+                    return 60 + Math.floor(Math.random() * 40);
+                } else if (hour >= 17 && hour <= 19) {
+                    // 晚高峰
+                    return 100 + Math.floor(Math.random() * 150);
+                } else if (hour >= 20 && hour <= 22) {
+                    // 晚上
+                    return 50 + Math.floor(Math.random() * 50);
+                } else if (hour === 23) {
+                    // 深夜
+                    return 30 + Math.floor(Math.random() * 30);
+                } else if (hour === 6) {
+                    // 清晨过渡期
+                    return 30 + Math.floor(Math.random() * 50);
+                }
+                return 50 + Math.floor(Math.random() * 100);
+            });
 
             const option = {
                 tooltip: { trigger: 'axis' },
                 grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-                xAxis: { type: 'category', boundaryGap: false, data: hours },
-                yAxis: { type: 'value', axisLabel: { formatter: '{value} 辆' } },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: hours,
+                    axisLabel: { color: '#94a3b8' },
+                    axisLine: { lineStyle: { color: '#334155' } }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: { formatter: '{value} 辆', color: '#94a3b8' },
+                    axisLine: { lineStyle: { color: '#334155' } },
+                    splitLine: { lineStyle: { color: '#1e293b' } }
+                },
                 series: [{
                     name: '车流量',
                     type: 'line',
@@ -412,26 +341,71 @@
             chart.setOption(option);
         }
 
-        // 初始化饼图
+        // 初始化饼图（优化显示效果，确保不超出容器）
         function initializePieChart() {
             const chart = echarts.init(document.getElementById('usage-pie-chart'));
 
             const option = {
-                tooltip: { trigger: 'item' },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} ({d}%)'
+                },
+                grid: {
+                    left: '0',
+                    right: '0',
+                    top: '0',
+                    bottom: '0'
+                },
                 series: [{
                     name: '车位使用',
                     type: 'pie',
-                    radius: ['40%', '70%'],
-                    avoidLabelOverlap: false,
-                    itemStyle: { borderRadius: 10, borderColor: '#1e293b', borderWidth: 2 },
-                    label: { show: false, position: 'center' },
-                    emphasis: {
-                        label: { show: true, fontSize: 20, fontWeight: 'bold' }
+                    radius: ['35%', '60%'],  // 减小饼图大小，确保在容器中
+                    center: ['50%', '50%'],  // 居中显示
+                    avoidLabelOverlap: true,
+                    itemStyle: {
+                        borderRadius: 8,
+                        borderColor: '#1e293b',
+                        borderWidth: 2
                     },
-                    labelLine: { show: false },
+                    label: {
+                        show: true,
+                        position: 'outside',
+                        color: '#e2e8f0',
+                        fontSize: 12,
+                        formatter: '{b}\n{c}个'
+                    },
+                    labelLine: {
+                        show: true,
+                        length: 10,
+                        length2: 5,
+                        lineStyle: {
+                            color: '#64748b'
+                        }
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            color: '#f8fafc'
+                        },
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    },
                     data: [
-                        { value: 2847, name: '空闲车位', itemStyle: { color: '#10b981' } },
-                        { value: 309, name: '已占用车位', itemStyle: { color: '#ef4444' } }
+                        {
+                            value: 2847,
+                            name: '空闲车位',
+                            itemStyle: { color: '#10b981' }
+                        },
+                        {
+                            value: 309,
+                            name: '已占用',
+                            itemStyle: { color: '#ef4444' }
+                        }
                     ]
                 }]
             };

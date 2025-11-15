@@ -120,8 +120,26 @@
                 <div class="flex items-center space-x-4">
                     <a href="index.html" class="text-gray-600 hover:text-blue-600 transition-colors">首页</a>
                     <a href="search.html" class="text-gray-600 hover:text-blue-600 transition-colors">停车场查询</a>
+                    <a href="navigation.html" class="text-blue-600 font-medium hover:text-blue-800 transition-colors">室内导航</a>
                     <a href="booking.html" class="text-gray-600 hover:text-blue-600 transition-colors">预约管理</a>
                     <a href="payment.html" class="text-gray-600 hover:text-blue-600 transition-colors">缴费中心</a>
+                    <a href="dashboard-big-screen.html" class="text-gray-600 hover:text-yellow-400 transition-colors" target="_blank">数据大屏</a>
+
+                    <!-- 通知铃铛 -->
+                    <button onclick="NotificationManager.showNotificationDrawer()" class="relative p-2 text-gray-600 hover:text-blue-600 transition-colors" id="notification-btn" style="display: none;">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold hidden" id="notification-badge">0</span>
+                    </button>
+
+                    <!-- 登录前显示 -->
+                    <a href="login.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" id="nav-login-btn">登录</a>
+                    <a href="register.html" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors" id="nav-register-btn">注册</a>
+
+                    <!-- 登录后显示 -->
+                    <button onclick="AuthManager.logout()" class="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors hidden" id="nav-logout-btn">退出</button>
                 </div>
             </div>
         </div>
@@ -383,7 +401,7 @@
     <!-- 页脚 -->
     <footer class="bg-gray-800 text-white py-12">
         <div class="container mx-auto px-6 text-center">
-            <p class="text-gray-300">&copy; 2024 智能停车管理系统. 基于人工智能和物联网技术的现代化停车解决方案.</p>
+            <p class="text-gray-300">&copy; 2025 智能停车管理系统. 基于人工智能和物联网技术的现代化停车解决方案.</p>
         </div>
     </footer>
 
