@@ -273,18 +273,20 @@
             try {
                 // 尝试初始化Leaflet地图
                 if (typeof L !== 'undefined') {
-                    map = L.map('map').setView([39.9042, 116.4074], 13);
+                    // 重新定位到沈阳市东北大学南湖校区（纬度: 41.7677, 经度: 123.4294）
+                    map = L.map('map').setView([41.7677, 123.4294], 15);
 
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: '© OpenStreetMap contributors'
                     }).addTo(map);
 
-                    // 添加一些示例停车场标记
+                    // 添加东北大学南湖校区周边的停车场标记
                     const parkingLocations = [
-                        { lat: 39.9042, lng: 116.4074, name: '中关村停车场', status: 'available' },
-                        { lat: 39.9100, lng: 116.4200, name: '王府井停车场', status: 'busy' },
-                        { lat: 39.8900, lng: 116.3900, name: '西单停车场', status: 'available' },
-                        { lat: 39.9200, lng: 116.4300, name: '东单停车场', status: 'full' }
+                        { lat: 41.7700, lng: 123.4306, name: '机电学馆停车场', status: 'available' },
+                        { lat: 41.7670, lng: 123.4240, name: '建筑学馆停车场', status: 'busy' },
+                        { lat: 41.7750, lng: 123.4330, name: '大成教学楼停车场', status: 'available' },
+                        { lat: 41.7650, lng: 123.4350, name: '逸夫教学楼停车场', status: 'full' },
+                        { lat: 41.7720, lng: 123.4230, name: '采矿学馆停车场', status: 'available' }
                     ];
 
                     parkingLocations.forEach(parking => {

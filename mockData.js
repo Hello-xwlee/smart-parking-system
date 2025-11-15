@@ -6,7 +6,7 @@
 const MockDB = {
   // 用户数据
   users: [
-    { id: 1, username: 'admin', email: 'admin@smartparking.com', password: 'admin123', role: 'admin' },
+    { id: 1, username: 'admin', email: 'admin@smartparking.com', password: 'admin123', role: 'admin', name: '系统管理员' },
     { id: 2, username: 'user1', email: 'user1@example.com', password: 'user123', role: 'user', name: '张三', phone: '13800138001' },
     { id: 3, username: 'user2', email: 'user2@example.com', password: 'user123', role: 'user', name: '李四', phone: '13800138002' }
   ],

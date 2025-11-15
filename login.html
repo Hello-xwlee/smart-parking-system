@@ -264,7 +264,8 @@
                     // 根据用户角色跳转
                     setTimeout(() => {
                         if (userData.role === 'admin') {
-                            window.location.href = 'admin.html';
+                            // 传递管理员用户名参数，以便admin.html显示正确的管理员名称
+                            window.location.href = `admin.html?admin=${encodeURIComponent(userData.username)}`;
                         } else if (redirect && redirect !== 'index.html') {
                             window.location.href = redirect;
                         } else {

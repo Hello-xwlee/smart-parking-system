@@ -1138,7 +1138,7 @@
             const adminUsername = urlParams.get('admin');
 
             if (adminUsername) {
-                adminNameElement.textContent = `管理员: ${adminUsername}`;
+                adminNameElement.textContent = `管理员: ${decodeURIComponent(adminUsername)}`;
                 return;
             }
 
