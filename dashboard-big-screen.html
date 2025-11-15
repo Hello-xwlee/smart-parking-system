@@ -120,10 +120,10 @@
         <!-- 右侧栏 -->
         <div class="right-panel">
             <!-- 车位分布 -->
-            <div class="card panel-card rounded-xl p-4">
+            <div class="card panel-card rounded-xl p-4" style="min-height: 280px;">
                 <h3 class="panel-title">车位使用分布</h3>
                 <div class="flex-1">
-                    <div class="chart-container" id="usage-pie-chart"></div>
+                    <div class="chart-container" id="usage-pie-chart" style="height: 200px;"></div>
                 </div>
             </div>
 
@@ -341,26 +341,30 @@
             chart.setOption(option);
         }
 
-        // 初始化饼图（优化显示效果，确保不超出容器）
+        // 初始化饼图（修复溢出问题）
         function initializePieChart() {
             const chart = echarts.init(document.getElementById('usage-pie-chart'));
+
+            // 获取容器高度
+            const container = document.getElementById('usage-pie-chart');
+            const containerHeight = container.clientHeight;
+            const containerWidth = container.clientWidth;
+
+            // 根据容器大小动态计算半径
+            const minDimension = Math.min(containerHeight, containerWidth);
+            const outerRadius = Math.min(40, minDimension / 2 - 10); // 最大40%，留10px边距
+            const innerRadius = Math.max(15, outerRadius - 20); // 内环比外环小20%
 
             const option = {
                 tooltip: {
                     trigger: 'item',
                     formatter: '{a} <br/>{b}: {c} ({d}%)'
                 },
-                grid: {
-                    left: '0',
-                    right: '0',
-                    top: '0',
-                    bottom: '0'
-                },
                 series: [{
                     name: '车位使用',
                     type: 'pie',
-                    radius: ['35%', '60%'],  // 减小饼图大小，确保在容器中
-                    center: ['50%', '50%'],  // 居中显示
+                    radius: ['40%', '70%'],
+                    center: ['50%', '50%'],
                     avoidLabelOverlap: true,
                     itemStyle: {
                         borderRadius: 8,
@@ -371,28 +375,31 @@
                         show: true,
                         position: 'outside',
                         color: '#e2e8f0',
-                        fontSize: 12,
-                        formatter: '{b}\n{c}个'
+                        fontSize: 11,
+                        formatter: '{b}\n{c}个',
+                        distance: 5  // 标签与饼图的距离
                     },
                     labelLine: {
                         show: true,
-                        length: 10,
-                        length2: 5,
+                        length: 5,  // 第一段线的长度
+                        length2: 5, // 第二段线的长度
                         lineStyle: {
-                            color: '#64748b'
+                            color: '#64748b',
+                            width: 1
                         }
                     },
                     emphasis: {
+                        scale: false, // 禁用放大效果，防止溢出
                         label: {
                             show: true,
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: 'bold',
                             color: '#f8fafc'
                         },
                         itemStyle: {
-                            shadowBlur: 10,
+                            shadowBlur: 5,
                             shadowOffsetX: 0,
-                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            shadowColor: 'rgba(0, 0, 0, 0.3)'
                         }
                     },
                     data: [

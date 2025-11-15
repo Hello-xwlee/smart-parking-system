@@ -73,7 +73,7 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <div class="text-sm text-gray-600">管理员: 张管理员</div>
+                    <div class="text-sm text-gray-600" id="current-admin">管理员: 李欣慰</div>
                     <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
                         退出登录
                     </button>
@@ -599,6 +599,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             generateSampleData();
             initializeDashboard();
+            updateAdminDisplayName(); // 更新右上角管理员名称
             displayUsers();
             displayParkingLots();
             displayBookings();
@@ -1120,7 +1121,52 @@
         // 退出登录
         function logout() {
             if (confirm('确定要退出登录吗？')) {
+                // 清除登录信息
+                localStorage.removeItem('smartparking_token');
+                localStorage.removeItem('smartparking_user');
                 window.location.href = 'index.html';
+            }
+        }
+
+        // 更新管理员显示名称
+        function updateAdminDisplayName() {
+            const adminNameElement = document.getElementById('current-admin');
+            if (!adminNameElement) return;
+
+            // 从session storage获取（如果有的话）
+            const urlParams = new URLSearchParams(window.location.search);
+            const adminUsername = urlParams.get('admin');
+
+            if (adminUsername) {
+                adminNameElement.textContent = `管理员: ${adminUsername}`;
+                return;
+            }
+
+            // 从localStorage获取
+            const userData = localStorage.getItem('smartparking_user');
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    if (user && user.username) {
+                        // 检查是否是管理员账号（简单判断：如果不是李四、王五、赵六、孙七这些普通用户，就认为是管理员）
+                        const normalUsers = ['李四', '王五', '赵六', '孙七', '张三'];
+                        if (!normalUsers.includes(user.username)) {
+                            adminNameElement.textContent = `管理员: ${user.username}`;
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.log('解析用户数据失败:', e);
+                }
+            }
+
+            // 默认显示第一个管理员
+            const adminUser = usersData.find(u => u.admin);
+            if (adminUser) {
+                adminNameElement.textContent = `管理员: ${adminUser.username}`;
+            } else {
+                // 如果找不到，保持默认的"李欣慰"
+                adminNameElement.textContent = '管理员: 李欣慰';
             }
         }
 

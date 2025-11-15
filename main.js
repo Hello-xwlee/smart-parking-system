@@ -1041,8 +1041,13 @@ function handleAdminLogin() {
     // 模拟登录验证
     setTimeout(function() {
         closeAdminLogin();
+        // 获取管理员用户名（这里假设是表单中的第一个输入框）
+        const adminForm = document.getElementById('admin-login-form');
+        const usernameInput = adminForm ? adminForm.querySelector('input[type="text"]') : null;
+        const username = usernameInput ? usernameInput.value : '管理员';
+
         // 跳转到管理员页面
-        window.location.href = 'admin.html';
+        window.location.href = `admin.html?admin=${encodeURIComponent(username)}`;
     }, 1000);
 }
 
