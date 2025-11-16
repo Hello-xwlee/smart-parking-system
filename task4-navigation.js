@@ -776,6 +776,9 @@ let heuristicComparisonChart = null;
  * Compare Manhattan vs Euclidean distance heuristics
  */
 function compareHeuristics() {
+    addAlgorithmLog('🔄 开始对比启发函数...');
+    console.log('compareHeuristics() called');
+
     const start = { x: 50, y: 450, floor: 1 };
     const goal = { x: 250, y: 450, floor: 1 };
 
@@ -798,22 +801,31 @@ function compareHeuristics() {
 }
 
 function visualizeHeuristicComparison(manhattan, euclidean) {
+    console.log('visualizeHeuristicComparison() called');
     const chartContainer = document.getElementById('heuristic-comparison-chart');
     if (!chartContainer) {
-        console.error('启发函数对比图表容器未找到');
+        console.error('❌ 启发函数对比图表容器未找到: heuristic-comparison-chart');
+        addAlgorithmLog('❌ 错误: 图表容器未找到');
         return;
     }
 
+    console.log('✅ 图表容器已找到:', chartContainer);
+
     // Ensure echarts is loaded
     if (typeof echarts === 'undefined') {
-        console.error('ECharts 库未加载');
+        console.error('❌ ECharts 库未加载');
+        addAlgorithmLog('❌ 错误: ECharts库未加载');
         chartContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#999;">图表库加载中...</div>';
         return;
     }
 
+    console.log('✅ ECharts库已加载');
+
     try {
         if (!heuristicComparisonChart) {
+            console.log('🔄 初始化ECharts实例...');
             heuristicComparisonChart = echarts.init(chartContainer);
+            addAlgorithmLog('✅ ECharts实例初始化完成');
         }
 
         const option = {
@@ -873,9 +885,11 @@ function visualizeHeuristicComparison(manhattan, euclidean) {
 
         heuristicComparisonChart.setOption(option);
         addAlgorithmLog('✅ 启发函数对比图表渲染完成');
+        console.log('✅ 图表渲染成功');
     } catch (error) {
-        console.error('启发函数对比图表渲染失败:', error);
-        chartContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#ef4444;">图表加载失败</div>';
+        console.error('❌ 启发函数对比图表渲染失败:', error);
+        addAlgorithmLog('❌ 图表渲染失败: ' + error.message);
+        chartContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#ef4444;">图表加载失败: ' + error.message + '</div>';
     }
 }
 
