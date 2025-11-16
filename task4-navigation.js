@@ -1255,76 +1255,21 @@ function showAlgorithmDebugInfo(path, exploredNodes, iterations) {
 // ============================================================================
 
 /**
- * Initialize algorithm visualization panel - called from HTML
+ * Initialize algorithm visualization panels
+ * Now the HTML containers are already in the page (non-dynamic)
  */
 function initializeAlgorithmVisualization() {
-    // Add algorithm control panel to navigation page
-    const controlPanelHTML = `
-        <section class="py-8 bg-gray-50" id="algorithm-visualization-panel">
-            <div class="container mx-auto px-6">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold gradient-text mb-4">🔬 导航算法可视化</h2>
-                    <p class="text-gray-600">观看A*寻路算法实时运行过程，对比不同启发函数效果</p>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Algorithm controls -->
-                    <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h3 class="font-bold text-xl mb-4">🎮 算法控制面板</h3>
-
-                        <!-- Progress bar -->
-                        <div class="mb-6">
-                            <div class="bg-gray-200 rounded-full h-2">
-                                <div id="algorithm-progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                            </div>
-                        </div>
-
-                        <!-- Control buttons -->
-                        <div class="flex gap-4 mb-6">
-                            <button onclick="playAlgorithmAnimationVisualization()" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors">
-                                ▶ 开始动画
-                            </button>
-                            <button onclick="stopAlgorithmAnimation()" class="flex-1 bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition-colors">
-                                ⏹ 停止
-                            </button>
-                            <button onclick="compareHeuristics()" class="flex-1 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors">
-                                📊 对比启发函数
-                            </button>
-                        </div>
-
-                        <!-- Debug info -->
-                        <div id="algorithm-debug-panel"></div>
-                    </div>
-
-                    <!-- Heuristic comparison -->
-                    <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h3 class="font-bold text-xl mb-4">⚖️ 启发函数对比</h3>
-                        <div id="heuristic-comparison-chart" style="height: 300px;"></div>
-                        <div id="heuristic-stats" class="mt-4"></div>
-                    </div>
-                </div>
-
-                <!-- Complexity analysis -->
-                <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="font-bold text-xl mb-4">📈 算法复杂度分析</h3>
-                    <div id="complexity-analysis-chart" style="height: 400px;"></div>
-                    <div id="complexity-table" class="mt-6"></div>
-                </div>
-            </div>
-        </section>
-    `;
-
-    // Find insertion point (before footer)
-    const footer = document.querySelector('footer');
-    if (footer) {
-        footer.insertAdjacentHTML('beforebegin', controlPanelHTML);
-    }
-
-    // Initialize charts after a delay to ensure DOM is ready
+    // Initialize charts after a delay to ensure ECharts is loaded
     setTimeout(() => {
-        analyzeAlgorithmComplexity();
-        addAlgorithmLog('✅ 算法可视化面板初始化完成');
-    }, 1500);
+        try {
+            analyzeAlgorithmComplexity();
+            addAlgorithmLog('✅ 算法可视化面板初始化完成');
+            addAlgorithmLog('📊 复杂度分析图表已加载');
+        } catch (error) {
+            console.error('算法可视化初始化失败:', error);
+            addAlgorithmLog('❌ 初始化失败: ' + error.message);
+        }
+    }, 2000);
 }
 
 /**
@@ -1389,8 +1334,7 @@ window.stopAlgorithmAnimation = function() {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Delay to ensure page is fully loaded, then initialize algorithm visualization
-    // NOTE: initializeAlgorithmVisualization() will CREATE the panel (it doesn't exist yet)
+    // NOTE: Now the panels are already in HTML, just need to initialize them
     setTimeout(() => {
         initializeAlgorithmVisualization();
     }, 2000);
