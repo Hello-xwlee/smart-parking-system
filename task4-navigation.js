@@ -799,60 +799,85 @@ function compareHeuristics() {
 
 function visualizeHeuristicComparison(manhattan, euclidean) {
     const chartContainer = document.getElementById('heuristic-comparison-chart');
-    if (!chartContainer) return;
-
-    if (!heuristicComparisonChart) {
-        heuristicComparisonChart = echarts.init(chartContainer);
+    if (!chartContainer) {
+        console.error('启发函数对比图表容器未找到');
+        return;
     }
 
-    const option = {
-        title: {
-            text: '启发函数对比分析',
-            left: 'center',
-            textStyle: { fontSize: 18 }
-        },
-        tooltip: {
-            trigger: 'axis',
-            axisPointer: { type: 'shadow' }
-        },
-        legend: {
-            data: ['曼哈顿距离', '欧氏距离'],
-            bottom: 10
-        },
-        xAxis: {
-            type: 'category',
-            data: ['路径长度', '探索节点数', '迭代次数', '耗时(ms)']
-        },
-        yAxis: {
-            type: 'value'
-        },
-        series: [
-            {
-                name: '曼哈顿距离',
-                type: 'bar',
-                data: [
-                    manhattan.path.length,
-                    manhattan.exploredNodes.length,
-                    manhattan.iterations,
-                    Math.floor(manhattan.iterations * 0.5) // Simulate time
-                ],
-                itemStyle: { color: '#3b82f6' }
-            },
-            {
-                name: '欧氏距离',
-                type: 'bar',
-                data: [
-                    euclidean.path.length,
-                    euclidean.exploredNodes.length,
-                    euclidean.iterations,
-                    Math.floor(euclidean.iterations * 0.5)
-                ],
-                itemStyle: { color: '#10b981' }
-            }
-        ]
-    };
+    // Ensure echarts is loaded
+    if (typeof echarts === 'undefined') {
+        console.error('ECharts 库未加载');
+        chartContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#999;">图表库加载中...</div>';
+        return;
+    }
 
-    heuristicComparisonChart.setOption(option);
+    try {
+        if (!heuristicComparisonChart) {
+            heuristicComparisonChart = echarts.init(chartContainer);
+        }
+
+        const option = {
+            title: {
+                text: '启发函数对比分析',
+                left: 'center',
+                textStyle: { fontSize: 16, color: '#333' }
+            },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' }
+            },
+            legend: {
+                data: ['曼哈顿距离', '欧氏距离'],
+                bottom: 10
+            },
+            xAxis: {
+                type: 'category',
+                data: ['路径长度', '探索节点数', '迭代次数', '耗时(ms)'],
+                axisLabel: { fontSize: 12 }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: { fontSize: 12 }
+            },
+            series: [
+                {
+                    name: '曼哈顿距离',
+                    type: 'bar',
+                    data: [
+                        manhattan.path.length,
+                        manhattan.exploredNodes.length,
+                        manhattan.iterations,
+                        Math.floor(manhattan.iterations * 0.5)
+                    ],
+                    itemStyle: { color: '#3b82f6' }
+                },
+                {
+                    name: '欧氏距离',
+                    type: 'bar',
+                    data: [
+                        euclidean.path.length,
+                        euclidean.exploredNodes.length,
+                        euclidean.iterations,
+                        Math.floor(euclidean.iterations * 0.5)
+                    ],
+                    itemStyle: { color: '#10b981' }
+                }
+            ],
+            grid: {
+                left: '10%',
+                right: '10%',
+                bottom: '15%',
+                top: '15%'
+            }
+        };
+
+        heuristicComparisonChart.setOption(option);
+        addAlgorithmLog('✅ 启发函数对比图表渲染完成');
+    } catch (error) {
+        console.error('启发函数对比图表渲染失败:', error);
+        chartContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#ef4444;">图表加载失败</div>';
+    }
+}
 
     // Display statistics
     const statsContainer = document.getElementById('heuristic-stats');
@@ -900,17 +925,28 @@ let complexityChart = null;
  */
 function analyzeAlgorithmComplexity() {
     const chartContainer = document.getElementById('complexity-analysis-chart');
-    if (!chartContainer) return;
-
-    if (!complexityChart) {
-        complexityChart = echarts.init(chartContainer);
+    if (!chartContainer) {
+        console.error('算法复杂度分析图表容器未找到');
+        return;
     }
 
-    // Generate complexity analysis data
-    const problemSizes = [5, 12, 20, 35, 50, 80, 120];
-    const actualTimes = problemSizes.map(n => Math.floor(n * Math.log(n) / Math.log(2)));
-    const theoreticalTimes = problemSizes.map(n => Math.floor(n * Math.log(n)));
-    const worstCaseTimes = problemSizes.map(n => n * n);
+    // Ensure echarts is loaded
+    if (typeof echarts === 'undefined') {
+        console.error('ECharts 库未加载');
+        chartContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#999;">图表库加载中...</div>';
+        return;
+    }
+
+    try {
+        if (!complexityChart) {
+            complexityChart = echarts.init(chartContainer);
+        }
+
+        // Generate complexity analysis data
+        const problemSizes = [5, 12, 20, 35, 50, 80, 120];
+        const actualTimes = problemSizes.map(n => Math.floor(n * Math.log(n) / Math.log(2)));
+        const theoreticalTimes = problemSizes.map(n => Math.floor(n * Math.log(n)));
+        const worstCaseTimes = problemSizes.map(n => n * n);
 
     const option = {
         title: {
@@ -969,11 +1005,12 @@ function analyzeAlgorithmComplexity() {
         ]
     };
 
-    complexityChart.setOption(option);
+        complexityChart.setOption(option);
+        addAlgorithmLog('✅ 算法复杂度分析图表渲染完成');
 
-    // Display complexity analysis table
-    const tableContainer = document.getElementById('complexity-table');
-    if (tableContainer) {
+        // Display complexity analysis table
+        const tableContainer = document.getElementById('complexity-table');
+        if (tableContainer) {
         const tableHTML = `
             <table class="w-full text-sm">
                 <thead class="bg-gray-50">
@@ -1000,7 +1037,12 @@ function analyzeAlgorithmComplexity() {
                 </tbody>
             </table>
         `;
-        tableContainer.innerHTML = tableHTML;
+            tableContainer.innerHTML = tableHTML;
+        }
+        addAlgorithmLog('✅ 复杂度分析表格渲染完成');
+    } catch (error) {
+        console.error('算法复杂度分析图表渲染失败:', error);
+        chartContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#ef4444;">图表加载失败</div>';
     }
 }
 

@@ -1110,6 +1110,67 @@
             event.target.closest('.sidebar-item').classList.add('active');
 
             currentSection = sectionName;
+
+            // ========================================
+            // PHASE 4: 智能分析标签页图表修复
+            // ========================================
+            // 当切换到智能分析标签页时，重新初始化或调整图表尺寸
+            if (sectionName === 'analytics') {
+                setTimeout(() => {
+                    console.log('🔧 智能分析标签页已激活，检查图表状态...');
+
+                    // 重新初始化或调整所有智能分析图表的尺寸
+                    const chartIds = [
+                        'demand-prediction-chart',
+                        'anomaly-detection-chart',
+                        'rfm-analysis-chart',
+                        'prediction-accuracy-chart'
+                    ];
+
+                    chartIds.forEach((chartId, index) => {
+                        const container = document.getElementById(chartId);
+                        if (container && typeof echarts !== 'undefined') {
+                            // 如果图表已初始化，只调整尺寸
+                            const chartInstance = echarts.getInstanceByDom(container);
+                            if (chartInstance) {
+                                chartInstance.resize();
+                                console.log(`✅ ${chartId} 图表尺寸已调整`);
+                            } else {
+                                // 如果图表未初始化，重新初始化
+                                setTimeout(() => {
+                                    switch(chartId) {
+                                        case 'demand-prediction-chart':
+                                            if (typeof initializeDemandPredictionChart === 'function') {
+                                                initializeDemandPredictionChart();
+                                            }
+                                            break;
+                                        case 'anomaly-detection-chart':
+                                            if (typeof initializeAnomalyDetectionChart === 'function') {
+                                                initializeAnomalyDetectionChart();
+                                            }
+                                            break;
+                                        case 'rfm-analysis-chart':
+                                            if (typeof initializeRFMAnalysisChart === 'function') {
+                                                initializeRFMAnalysisChart();
+                                            }
+                                            break;
+                                        case 'prediction-accuracy-chart':
+                                            if (typeof initializePredictionAccuracyChart === 'function') {
+                                                initializePredictionAccuracyChart();
+                                            }
+                                            break;
+                                    }
+                                }, index * 200); // 错开初始化时间，避免同时渲染造成卡顿
+                            }
+                        }
+                    });
+
+                    console.log('✅ 智能分析图表已重新初始化或调整尺寸');
+                }, 300); // 延迟300ms确保标签页内容已完全显示
+            }
+            // ========================================
+            // END PHASE 4
+            // ========================================
         }
 
         // 用户管理功能
