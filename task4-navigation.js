@@ -891,7 +891,6 @@ function visualizeHeuristicComparison(manhattan, euclidean) {
         addAlgorithmLog('❌ 图表渲染失败: ' + error.message);
         chartContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#ef4444;">图表加载失败: ' + error.message + '</div>';
     }
-}
 
     // Display statistics
     const statsContainer = document.getElementById('heuristic-stats');
