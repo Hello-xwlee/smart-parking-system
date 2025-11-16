@@ -491,9 +491,6 @@
     <script src="smart-functions.js"></script>
     <script src="task4-navigation.js"></script>
     <script>
-        // 全局变量 - 确保在所有脚本之前定义
-        var selectedTargetLocation = null;
-
         // ==================== 导航演示控制器 ====================
         const navigationPlayer = {
             currentNavigation: null,
@@ -1003,6 +1000,7 @@
                 path: path
             };
         }
+        // ==================== End 自定义导航功能 ====================
 
         // ========================================
         // Phase 3: 算法可视化控制函数 (ADDED)
@@ -1040,6 +1038,14 @@
         // ========================================
         // End Phase 3
         // ========================================
+
+        // ==================== 全局函数绑定（确保在DOM加载前可用） ====================
+        // 将函数绑定到window对象，确保HTML中的onclick可以访问
+        window.startCustomNavigation = startCustomNavigation;
+        window.selectQuickSpot = selectQuickSpot;
+        window.startDemoNavigation = startDemoNavigation;
+        window.changeFloor = changeFloor;
+        window.findVehicle = findVehicle;
 
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
