@@ -215,6 +215,103 @@
             </div>
         </section>
 
+        <!-- ====== PHASE 2: 动态定价可视化面板（新增） ====== -->
+        <section class="py-12 bg-white" id="pricing-visualization">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-10">
+                    <h2 class="text-4xl font-bold gradient-text mb-4">💰 动态定价算法可视化</h2>
+                    <p class="text-gray-600 text-lg max-w-3xl mx-auto">
+                        展示实时定价计算过程，支持不同场景模拟，了解费用是如何根据时间、车流量动态调整的
+                    </p>
+                </div>
+
+                <!-- 定价计算器 -->
+                <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-8 mb-10 shadow-lg">
+                    <h3 class="text-2xl font-bold mb-6 text-gray-800">🧮 费用详情计算器</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-lg p-6 shadow-md text-center">
+                            <div class="text-3xl mb-3">🅿️</div>
+                            <h4 class="font-semibold mb-2">基础价格</h4>
+                            <div class="text-2xl font-bold text-blue-600" id="base-price-display">¥5/小时</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-6 shadow-md text-center">
+                            <div class="text-3xl mb-3">⏰</div>
+                            <h4 class="font-semibold mb-2">时间因子</h4>
+                            <div class="text-2xl font-bold text-green-600" id="time-factor-display">×1.0</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-6 shadow-md text-center">
+                            <div class="text-3xl mb-3">🚗</div>
+                            <h4 class="font-semibold mb-2">流量因子</h4>
+                            <div class="text-2xl font-bold text-purple-600" id="traffic-factor-display">×1.0</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-6 shadow-md text-center border-2 border-yellow-400">
+                            <div class="text-3xl mb-3">💳</div>
+                            <h4 class="font-semibold mb-2">最终价格</h4>
+                            <div class="text-3xl font-bold text-yellow-600" id="final-price-display">¥5/小时</div>
+                        </div>
+                    </div>
+
+                    <!-- 计算公式展示 -->
+                    <div class="bg-white rounded-lg p-6 shadow-md">
+                        <h4 class="font-semibold text-lg mb-4 text-gray-800">⚡ 计算公式</h4>
+                        <div class="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm" id="pricing-formula">
+                            实时价格 = 基础价格 × 时间因子 × 流量因子 × 节假日因子
+                        </div>
+                        <div class="mt-4 p-3 bg-gray-50 rounded">
+                            <p class="text-sm text-gray-600" id="formula-breakdown">
+                                💡 示例：¥5 × 1.0 × 1.0 × 1.0 = ¥5/小时
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 定价策略模拟器 -->
+                <div class="bg-gray-50 rounded-xl p-8 mb-10 shadow-lg">
+                    <h3 class="text-2xl font-bold mb-6 text-gray-800">🎮 定价策略模拟器</h3>
+                    <p class="text-gray-600 mb-6">选择不同场景，查看定价策略如何动态调整</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <button onclick="simulatePricingScenario('normal')" class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:scale-105 text-left">
+                            <div class="text-3xl mb-3 text-center">😊</div>
+                            <h4 class="font-semibold mb-2 text-center">场景1: 平时正常</h4>
+                            <p class="text-sm text-gray-600">工作日白天，车流量正常</p>
+                        </button>
+
+                        <button onclick="simulatePricingScenario('rush')" class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:scale-105 text-left">
+                            <div class="text-3xl mb-3 text-center">🚗💨</div>
+                            <h4 class="font-semibold mb-2 text-center">场景2: 高峰拥堵</h4>
+                            <p class="text-sm text-gray-600">早/晚高峰，车流量大</p>
+                        </button>
+
+                        <button onclick="simulatePricingScenario('night')" class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:scale-105 text-left">
+                            <div class="text-3xl mb-3 text-center">🌙</div>
+                            <h4 class="font-semibold mb-2 text-center">场景3: 深夜低谷</h4>
+                            <p class="text-sm text-gray-600">深夜时段，车流量少</p>
+                        </button>
+
+                        <button onclick="simulatePricingScenario('holiday')" class="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all transform hover:scale-105 text-left">
+                            <div class="text-3xl mb-3 text-center">🎉</div>
+                            <h4 class="font-semibold mb-2 text-center">场景4: 节假日</h4>
+                            <p class="text-sm text-gray-600">节假日期间，需求旺盛</p>
+                        </button>
+                    </div>
+
+                    <!-- 模拟结果 -->
+                    <div id="simulation-results" class="bg-white rounded-lg p-6 shadow-md hidden">
+                        <h4 class="font-semibold text-lg mb-4">📊 模拟结果</h4>
+                        <div id="simulation-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- 24小时价格趋势图 -->
+                <div class="bg-gray-50 rounded-xl p-8 shadow-lg">
+                    <h3 class="text-2xl font-bold mb-6 text-gray-800">📈 24小时价格趋势</h3>
+                    <div id="price-trend-chart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </section>
+
         <!-- 缴费记录 -->
         <section class="py-8">
             <div class="container mx-auto px-6">
@@ -809,7 +906,7 @@
             };
             monthlyChart.setOption(monthlyOption);
 
-            // 停车场消费分布图表
+            // 停车场消费分布图表（沈阳停车场数据）
             const parkingChart = echarts.init(document.getElementById('parking-chart'));
             const parkingOption = {
                 tooltip: {
@@ -826,11 +923,13 @@
                         type: 'pie',
                         radius: '50%',
                         data: [
-                            { value: 320, name: '中关村停车场' },
-                            { value: 280, name: '王府井停车场' },
-                            { value: 250, name: '西单停车场' },
-                            { value: 180, name: '东单停车场' },
-                            { value: 150, name: '其他停车场' }
+                            { value: 320, name: '机电学馆停车场' },
+                            { value: 280, name: '建筑学馆停车场' },
+                            { value: 250, name: '大成停车场' },
+                            { value: 180, name: '逸夫停车场' },
+                            { value: 150, name: '何世礼停车场' },
+                            { value: 120, name: '采矿学馆停车场' },
+                            { value: 100, name: '冶金学馆停车场' }
                         ],
                         emphasis: {
                             itemStyle: {
@@ -863,6 +962,170 @@
             document.getElementById('monthly-amount').textContent = `¥${monthlyAmount.toFixed(2)}`;
             document.getElementById('savings-amount').textContent = `¥${savingsAmount.toFixed(2)}`;
         }
+
+        // ==================== PHASE 2: 动态定价可视化功能 ====================
+        // ===== 价格趋势图 =====
+        let priceTrendChart = null;
+
+        /**
+         * Initialize 24-hour price trend chart
+         */
+        function initializePriceTrendChart() {
+            const chartContainer = document.getElementById('price-trend-chart');
+            if (!chartContainer) return;
+
+            priceTrendChart = echarts.init(chartContainer);
+            const hours = Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+
+            const priceData = hours.map((_, index) => {
+                let multiplier = 1;
+                if ((index >= 0 && index < 6)) {
+                    multiplier = 0.8 + Math.random() * 0.2;
+                } else if (index >= 7 && index <= 9) {
+                    multiplier = 1.3 + Math.random() * 0.3;
+                } else if (index >= 12 && index <= 13) {
+                    multiplier = 1.1 + Math.random() * 0.2;
+                } else if (index >= 17 && index <= 19) {
+                    multiplier = 1.4 + Math.random() * 0.3;
+                } else if (index >= 19 && index <= 22) {
+                    multiplier = 1.2 + Math.random() * 0.2;
+                } else {
+                    multiplier = 1.0 + Math.random() * 0.15;
+                }
+                return Math.round(5 * multiplier * 10) / 10;
+            });
+
+            const option = {
+                title: { text: '24小时价格变化趋势', left: 'center' },
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        return `时间: ${params[0].name}<br/>价格: ¥${params[0].value}/小时`;
+                    }
+                },
+                xAxis: { type: 'category', data: hours, axisLabel: { rotate: 45, color: '#666' } },
+                yAxis: { type: 'value', name: '价格 (元/小时)', axisLabel: { formatter: '¥{value}' } },
+                series: [{
+                    name: '价格',
+                    type: 'line',
+                    data: priceData,
+                    smooth: true,
+                    lineStyle: { color: '#3b82f6', width: 3 },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
+                            { offset: 1, color: 'rgba(59, 130, 246, 0.1)' }
+                        ])
+                    },
+                    markPoint: { data: [{ type: 'max', name: '最高价' }, { type: 'min', name: '最低价' }] },
+                    markLine: { data: [{ type: 'average', name: '平均价格' }] }
+                }]
+            };
+
+            priceTrendChart.setOption(option);
+            window.addEventListener('resize', () => { if (priceTrendChart) priceTrendChart.resize(); });
+        }
+
+        /**
+         * Simulate different pricing scenarios
+         */
+        function simulatePricingScenario(scenario) {
+            let basePrice = 5, timeFactor = 1, trafficFactor = 1, holidayFactor = 1, description = '';
+
+            if (scenario === 'normal') {
+                timeFactor = 1.0; trafficFactor = 1.0;
+                description = '工作日白天，车流量正常，基础价格';
+            } else if (scenario === 'rush') {
+                timeFactor = 1.5; trafficFactor = 1.3;
+                description = '早/晚高峰，车流量大，价格上涨';
+            } else if (scenario === 'night') {
+                timeFactor = 0.7; trafficFactor = 0.8;
+                description = '深夜时段，车流量少，价格优惠';
+            } else if (scenario === 'holiday') {
+                holidayFactor = 1.2; trafficFactor = 1.4;
+                description = '节假日期间，需求旺盛，价格上浮';
+            }
+
+            const finalPrice = basePrice * timeFactor * trafficFactor * holidayFactor;
+            document.getElementById('base-price-display').textContent = `¥${basePrice}/小时`;
+            document.getElementById('time-factor-display').textContent = `×${timeFactor.toFixed(1)}`;
+            document.getElementById('traffic-factor-display').textContent = `×${trafficFactor.toFixed(1)}`;
+            document.getElementById('final-price-display').textContent = `¥${finalPrice.toFixed(1)}/小时`;
+            document.getElementById('pricing-formula').textContent = `实时价格 = ¥${basePrice} × ${timeFactor.toFixed(1)} × ${trafficFactor.toFixed(1)} × ${holidayFactor.toFixed(1)} = ¥${finalPrice.toFixed(1)}/小时`;
+            document.getElementById('formula-breakdown').innerHTML = `💡 ${description}: ¥${basePrice} × ${timeFactor.toFixed(1)} × ${trafficFactor.toFixed(1)} × ${holidayFactor.toFixed(1)} = <strong>¥${finalPrice.toFixed(1)}/小时</strong>`;
+            generateSimulationChart(basePrice, timeFactor, trafficFactor, holidayFactor);
+            alert(`✅ 场景模拟成功！\n${description}\n最终价格: ¥${finalPrice.toFixed(1)}/小时`);
+        }
+
+        // ===== Pricing simulation chart =====
+        let simulationChart = null;
+
+        /**
+         * Create visualization of pricing components
+         */
+        function generateSimulationChart(basePrice, timeFactor, trafficFactor, holidayFactor) {
+            const resultsSection = document.getElementById('simulation-results');
+            resultsSection.classList.remove('hidden');
+
+            if (!simulationChart) {
+                const chartContainer = document.getElementById('simulation-chart');
+                simulationChart = echarts.init(chartContainer);
+            }
+
+            const baseValue = 5;
+            const timeValue = 5 * (timeFactor - 1);
+            const trafficValue = 5 * timeFactor * (trafficFactor - 1);
+            const holidayValue = 5 * timeFactor * trafficFactor * (holidayFactor - 1);
+            const finalValue = basePrice * timeFactor * trafficFactor * holidayFactor;
+
+            const chartData = [
+                { name: '基础价格', value: baseValue, color: '#3b82f6' },
+                { name: '时间调整', value: timeValue, color: '#10b981' },
+                { name: '流量调整', value: trafficValue, color: '#f59e0b' },
+                { name: '节假日调整', value: holidayValue, color: '#ef4444' }
+            ].filter(item => Math.abs(item.value) > 0.01);
+
+            const option = {
+                title: { text: '价格构成分析', left: 'center', textStyle: { fontSize: 16 } },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        let result = ''; let total = 0;
+                        params.forEach(param => { total += param.value; result += `${param.seriesName}: ¥${param.value.toFixed(2)}<br/>`; });
+                        result += `最终价格: ¥${total.toFixed(2)}/小时`;
+                        return result;
+                    }
+                },
+                legend: { show: false },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: ['价格构成'] },
+                yAxis: { type: 'value', name: '价格 (元/小时)', axisLabel: { formatter: '¥{value}' } },
+                series: chartData.map(item => ({
+                    name: item.name,
+                    type: 'bar',
+                    stack: 'total',
+                    label: { show: true, formatter: '¥{c}' },
+                    data: [item.value],
+                    itemStyle: { color: item.color }
+                }))
+            };
+
+            simulationChart.setOption(option, true);
+            simulationChart.resize();
+        }
+
+        /**
+         * Initialize pricing visualization components
+         */
+        function initializePricingVisualization() {
+            setTimeout(() => { initializePriceTrendChart(); }, 500);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initializePricingVisualization, 1000);
+        });
+        // ==================== End PHASE 2 ====================
     </script>
 </body>
 </html>

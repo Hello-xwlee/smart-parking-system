@@ -857,90 +857,148 @@ function initializeParticles() {
 
 // 初始化图表
 function initializeCharts() {
-    // 停车场使用率图表 - 使用 MockDB 数据
-    const usageChart = echarts.init(document.getElementById('usage-chart'));
-    const parkingLots = MockDB.parkingLots;
+    // ========================================
+    // 修复：添加错误处理和延迟初始化 (FIXED)
+    // ========================================
+    setTimeout(() => {
+        try {
+            // 停车场使用率图表 - 使用 MockDB 数据
+            const usageChartElement = document.getElementById('usage-chart');
+            const activityChartElement = document.getElementById('activity-chart');
 
-    // 计算总车位和已使用车位
-    const totalSpots = parkingLots.reduce((sum, lot) => sum + lot.totalSpots, 0);
-    const usedSpots = parkingLots.reduce((sum, lot) => sum + (lot.totalSpots - lot.availableSpots), 0);
-
-    const usageOption = {
-        tooltip: {
-            trigger: 'item'
-        },
-        legend: {
-            orient: 'vertical',
-            left: 'left'
-        },
-        series: [
-            {
-                name: '车位使用情况',
-                type: 'pie',
-                radius: '50%',
-                data: [
-                    { value: usedSpots, name: '已使用' },
-                    { value: totalSpots - usedSpots, name: '空闲' }
-                ],
-                emphasis: {
-                    itemStyle: {
-                        shadowBlur: 10,
-                        shadowOffsetX: 0,
-                        shadowColor: 'rgba(0, 0, 0, 0.5)'
-                    }
-                },
-                color: ['#3b82f6', '#10b981']
+            if (!usageChartElement || !activityChartElement) {
+                console.error('❌ 图表容器未找到，检查ID是否正确');
+                return;
             }
-        ]
-    };
-    usageChart.setOption(usageOption);
 
-    // 用户活跃度图表
-    const activityChart = echarts.init(document.getElementById('activity-chart'));
-    const activityOption = {
-        tooltip: {
-            trigger: 'axis'
-        },
-        xAxis: {
-            type: 'category',
-            data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-        },
-        yAxis: {
-            type: 'value'
-        },
-        series: [
-            {
-                name: '活跃用户数',
-                data: [820, 932, 901, 934, 1290, 1330, 1320],
-                type: 'line',
-                smooth: true,
-                itemStyle: {
-                    color: '#3b82f6'
+            const parkingLots = MockDB.parkingLots;
+
+            // 计算总车位和已使用车位
+            const totalSpots = parkingLots.reduce((sum, lot) => sum + lot.totalSpots, 0);
+            const usedSpots = parkingLots.reduce((sum, lot) => sum + (lot.totalSpots - lot.availableSpots), 0);
+
+            const usageChart = echarts.init(usageChartElement);
+            const usageOption = {
+                title: {
+                    text: '实时车位使用情况',
+                    left: 'center',
+                    textStyle: { fontSize: 16 }
                 },
-                areaStyle: {
-                    color: {
-                        type: 'linear',
-                        x: 0,
-                        y: 0,
-                        x2: 0,
-                        y2: 1,
-                        colorStops: [{
-                            offset: 0, color: 'rgba(59, 130, 246, 0.3)'
-                        }, {
-                            offset: 1, color: 'rgba(59, 130, 246, 0.1)'
-                        }]
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    top: 'center'
+                },
+                series: [
+                    {
+                        name: '车位使用情况',
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        center: ['60%', '50%'],
+                        data: [
+                            { value: usedSpots, name: '已使用' },
+                            { value: totalSpots - usedSpots, name: '空闲' }
+                        ],
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        },
+                        color: ['#3b82f6', '#10b981'],
+                        label: {
+                            show: true,
+                            formatter: '{b}\n{d}%'
+                        }
                     }
-                }
-            }
-        ]
-    };
-    activityChart.setOption(activityOption);
+                ]
+            };
+            usageChart.setOption(usageOption);
 
-    // 响应式图表
-    window.addEventListener('resize', function() {
-        usageChart.resize();
-        activityChart.resize();
-    });
+            // 响应式调整
+            window.addEventListener('resize', () => {
+                if (usageChart) usageChart.resize();
+            });
+
+            console.log('✅ 停车场使用率图表初始化完成');
+
+            // 用户活跃度图表
+            const activityChart = echarts.init(activityChartElement);
+            const activityOption = {
+                title: {
+                    text: '一周用户活跃度',
+                    left: 'center',
+                    textStyle: { fontSize: 16 }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: '{b}: {c} 人'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    axisLabel: { interval: 0 }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '活跃用户数',
+                    axisLabel: { formatter: '{value} 人' }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                series: [
+                    {
+                        name: '活跃用户数',
+                        data: [820, 932, 901, 934, 1290, 1330, 1320],
+                        type: 'line',
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 8,
+                        lineStyle: {
+                            width: 3,
+                            color: '#3b82f6'
+                        },
+                        itemStyle: {
+                            color: '#3b82f6'
+                        },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0,
+                                y: 0,
+                                x2: 0,
+                                y2: 1,
+                                colorStops: [{
+                                    offset: 0, color: 'rgba(59, 130, 246, 0.3)'
+                                }, {
+                                    offset: 1, color: 'rgba(59, 130, 246, 0.1)'
+                                }]
+                            }
+                        }
+                    }
+                ]
+            };
+            activityChart.setOption(activityOption);
+
+            // 响应式调整 - 合并事件监听器
+            window.addEventListener('resize', () => {
+                if (activityChart) activityChart.resize();
+            });
+
+            console.log('✅ 用户活跃度图表初始化完成');
+        } catch (error) {
+            console.error('❌ 图表初始化失败:', error);
+        }
+    }, 500); // 延迟500ms确保DOM完全加载
 }
 
 // 初始化实时数据更新

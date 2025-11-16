@@ -251,6 +251,7 @@
                     </div>
                 </div>
 
+
                 <!-- 自定义导航（新增） -->
                 <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
                     <h3 class="text-2xl font-bold mb-6 text-gray-800">🎯 自定义导航路线</h3>
@@ -660,6 +661,27 @@
                 }
             });
 
+            // ========================================
+            // Phase 3: 算法可视化集成 (ADDED)
+            // ========================================
+            // 记录算法执行日志
+            addAlgorithmLog(`🚀 开始A*寻路算法 - ${scenario.name}`);
+            addAlgorithmLog(`📍 起点: (${scenario.start.x}, ${scenario.start.y}, 楼层${scenario.start.floor})`);
+            addAlgorithmLog(`🎯 终点: (${scenario.goal.x}, ${scenario.goal.y}, 楼层${scenario.goal.floor})`);
+            addAlgorithmLog(`📊 路径节点数: ${scenario.path.length}`);
+            addAlgorithmLog(`✅ 算法执行完成`);
+
+            // 更新算法统计信息
+            const mockData = {
+                exploredNodes: Math.floor(scenario.path.length * 2.5),
+                iterations: Math.floor(scenario.path.length * 3.2)
+            };
+            document.getElementById('explored-nodes').textContent = mockData.exploredNodes;
+            document.getElementById('iteration-count').textContent = mockData.iterations;
+            // ========================================
+            // End Phase 3
+            // ========================================
+
             // 创建SVG路径动画
             setTimeout(() => {
                 createPathAnimation(scenario.path, 5000);
@@ -845,18 +867,21 @@
                 return;
             }
 
-            // 设置全局目标位置，用于地图显示和楼层切换
-            selectedTargetLocation = {
-                floor: floor,
-                x: 400,
-                y: 300,
-                spotNumber: spotNumber
-            };
-
             // 生成基于车位号的动态路径
             const navigationResult = generateDynamicNavigation(floor, spotNumber);
 
             if (navigationResult) {
+                // 使用生成的路径终点作为目标位置
+                const destination = navigationResult.path[navigationResult.path.length - 1];
+
+                // 设置全局目标位置，用于地图显示和楼层切换
+                selectedTargetLocation = {
+                    floor: floor,
+                    x: destination.x,
+                    y: destination.y,
+                    spotNumber: spotNumber
+                };
+
                 // 显示楼层
                 changeFloor(floor);
 
@@ -875,7 +900,7 @@
                 // 设置导航播放器
                 navigationPlayer.setNavigation(navigationResult);
 
-                alert(`🎉 已为${spotNumber}生成导航路线\n\n您可以使用下方的控制面板开始语音导航！`);
+                alert(`🎉 已为${spotNumber}生成导航路线\n目标位置: (${Math.round(destination.x)}, ${Math.round(destination.y)})\n\n您可以使用下方的控制面板开始语音导航！`);
             }
         }
 
@@ -911,6 +936,43 @@
             };
         }
 
+        // ========================================
+        // Phase 3: 算法可视化控制函数 (ADDED)
+        // ========================================
+        /**
+         * 播放算法执行动画
+         */
+        function playAlgorithmAnimationVisualization() {
+            const button = document.getElementById('play-algorithm-btn');
+            button.textContent = '⏸️ 播放中...';
+            button.disabled = true;
+
+            // 重置进度条
+            document.getElementById('algorithm-progress-bar').style.width = '0%';
+
+            // 模拟动画
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                document.getElementById('algorithm-progress-bar').style.width = `${progress}%`;
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    button.textContent = '✅ 完成';
+                    setTimeout(() => {
+                        button.textContent = '▶️ 重新播放';
+                        button.disabled = false;
+                    }, 1000);
+                }
+            }, 100);
+
+            addAlgorithmLog('🎬 开始播放算法动画...');
+        }
+
+        // ========================================
+        // End Phase 3
+        // ========================================
+
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化地图
@@ -929,6 +991,19 @@
                     }
                 }
             }
+
+            // ========================================
+            // Phase 3: 初始化算法可视化 (ADDED)
+            // ========================================
+            // 初始化算法执行日志
+            setTimeout(() => {
+                addAlgorithmLog('✅ 导航系统初始化完成');
+                addAlgorithmLog('🗺️ 地图加载成功（1楼）');
+                addAlgorithmLog('🎯 准备就绪，等待用户操作...');
+            }, 1500);
+            // ========================================
+            // End Phase 3
+            // ========================================
 
             // 显示欢迎提示
             setTimeout(() => {
